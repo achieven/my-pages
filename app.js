@@ -5,7 +5,9 @@ var fs = require('fs');
 
 app.get('/', function (req, res) {
     var projects = [
-        {name: 'emitter', link:'http://emitter.achievendar.tk'}
+        {name: 'emitter', link:'http://emitterachi.achievendar.tk'},
+        {name: 'backend', link:'http://backend.achievendar.tk'},
+        {name: 'Simple Rest Api', link:'http://simplerestapi.achievendar.tk'}
     ]
     var html = Handlebars.compile(fs.readFileSync('./app.html', 'utf8'))({
         projects:projects 
