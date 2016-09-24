@@ -8,7 +8,7 @@
 <div class="container">
     <nav class="navbar navbar-inverse">
         <div class="container-fluid">
-            <form id="postProfile" action="profiles" method="post" class="navbar-form">
+            <form id="postProfile" method="post" class="navbar-form">
                 <ul class="nav navbar-nav">
                     <li><input type="text" class="form-control createdName" placeholder="name"></li>
                     <li><input type="text" class="form-control createdBio" placeholder="bio"></li>
@@ -16,6 +16,7 @@
                     <li>
                         <button class="btn btn-success" type='submit'>Create</button>
                     </li>
+                    <li class="form-control alert-danger error-post-profile hide"></li>
                 </ul>
             </form>
         </div>
@@ -24,7 +25,7 @@
     <div class="allPeople"></div>
 </div>
 
-<div class="modal fade" id="editPersonModal" role="dialog">
+<div class="modal fade edit-profile-modal" id="editPersonModal" role="dialog">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
@@ -33,10 +34,13 @@
                 <span class="nameAlongsidePicture">Edit {{this.nameAlongsidePicture}}</span>
             </div>
             <div class="modal-body">
-                <form id="editPerson" action="">
+                <form id="editPerson">
                     <input type="text" class="form-control editName">
+                    <div class=" form-control alert-danger edit-name-error hide"></div>
                     <input type="text" class="form-control editBio">
+                    <div></div>
                     <input type="text" class="form-control editFb_id">
+                    <div></div>
                     <option class="hide personIdToSend" value={{this.id}}>{{this.id}}</option>
 
                     <div class="modal-footer">
@@ -98,12 +102,19 @@
             url: '/simplerestapi/profiles',
             contentType: 'application/json',
             success: function(){
+                $('.error-post-profile').addClass('hide')
                 getAndRenderAllProfiles()
+            },
+            error: function(err){
+                $('.error-post-profile').removeClass('hide')
+                $('.error-post-profile').text(err.responseText)
             }
+
         })
     })
 
     $('#editPersonModal').on('show.bs.modal', function (e) {
+        $('.edit-name-error').addClass('hide')
         var id = $(e.relatedTarget).data('person')
         $.ajax({
             type: 'get',
@@ -119,6 +130,14 @@
 
                 $('#editPerson').on('submit', function (e) {
                     var newName = $('.editName').val()
+                    console.log(newName.length)
+                    if(newName.length > 23){
+                        $('.edit-name-error').removeClass('hide')
+                        $('.edit-name-error').text('name cant be longer than 23 letters!')
+                        e.preventDefault()
+                        return
+                    }
+
                     var newBio = $('.editBio').val()
                     var newFb_id = $('.editFb_id').val()
                     var data = {}
@@ -131,7 +150,7 @@
                             type: 'put',
                             data: JSON.stringify(data),
                             url: '/simplerestapi/profiles/' + data.id,
-                            contentType: 'application/json'
+                            contentType: 'application/json',
                         })
                     }
                 })
