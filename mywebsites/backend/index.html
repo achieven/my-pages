@@ -109,7 +109,7 @@
 
     $('#assets').on('submit', function (e) {
         e.preventDefault();
-        $('.ladda-spinner').removeClass('hide')
+        $('.getAssetsBtn .ladda-spinner').removeClass('hide')
         var laddaGetAssets = Ladda.create( document.querySelector( '.getAssetsBtn' ) )
         laddaGetAssets.start()
 
@@ -120,7 +120,7 @@
             success: function (data) {
                 laddaGetAssets.stop()
                 $('.getAssetsBtn').removeClass('ladda-button')
-                $('.ladda-spinner').addClass('hide')
+                $('.getAssetsBtn .ladda-spinner').addClass('hide')
 
                 $('.getAssetsErrorHeader').addClass('hide')
                 $('.getAssetsHeader').removeClass('hide')
@@ -133,7 +133,7 @@
             error: function (err) {
                 laddaGetAssets.stop()
                 $('.getAssetsBtn').removeClass('ladda-button')
-                $('.ladda-spinner').addClass('hide')
+                $('.getAssetsBtn .ladda-spinner').addClass('hide')
 
                 $('.getAssetsHeader').addClass('hide')
                 $('.getAssetsErrorHeader').removeClass('hide')
@@ -144,7 +144,7 @@
 
     $('#issue').on('submit', function (e) {
         e.preventDefault();
-        $('.ladda-spinner').removeClass('hide')
+        $('.issueAssetsBtn .ladda-spinner').removeClass('hide')
         var laddaIssueAssets = Ladda.create( document.querySelector( '.issueAssetsBtn' ) )
         laddaIssueAssets.start()
 
@@ -158,7 +158,7 @@
             success: function (data) {
                 laddaIssueAssets.stop()
                 $('.issueAssetsBtn').removeClass('ladda-button')
-                $('.ladda-spinner').addClass('hide')
+                $('.issueAssetsBtn .ladda-spinner').addClass('hide')
 
                 $('.issueAssetsErrorHeader').addClass('hide')
                 $('.issueAssetsHeader').removeClass('hide')
@@ -172,7 +172,7 @@
             error: function (err) {
                 laddaIssueAssets.stop()
                 $('.issueAssetsBtn').removeClass('ladda-button')
-                $('.ladda-spinner').addClass('hide')
+                $('.issueAssetsBtn .ladda-spinner').addClass('hide')
 
                 $('.issueAssetsHeader').addClass('hide')
                 $('.issueAssetsErrorHeader').removeClass('hide')
@@ -183,7 +183,7 @@
 
     $('#send').on('submit', function (e) {
         e.preventDefault();
-        $('.ladda-spinner').removeClass('hide')
+        $('.sendAssetBtn .ladda-spinner').removeClass('hide')
         var laddaSendAsset = Ladda.create( document.querySelector( '.sendAssetBtn' ) )
         laddaSendAsset.start()
 
@@ -197,7 +197,7 @@
             success: function (data) {
                 laddaSendAsset.stop()
                 $('.sendAssetBtn').removeClass('ladda-button')
-                $('.ladda-spinner').addClass('hide')
+                $('.sendAssetBtn .ladda-spinner').addClass('hide')
 
                 $('.sendAssetErrorHeader').addClass('hide')
                 $('.sendAssetHeader').removeClass('hide')
@@ -206,7 +206,7 @@
             error: function (err) {
                 laddaSendAsset.stop()
                 $('.sendAssetBtn').removeClass('ladda-button')
-                $('.ladda-spinner').addClass('hide')
+                $('.sendAssetBtn .ladda-spinner').addClass('hide')
 
                 $('.sendAssetHeader').addClass('hide')
                 $('.sendAssetErrorHeader').removeClass('hide')
