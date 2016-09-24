@@ -40,7 +40,7 @@ app.get('/emitter', function (req, res) {
         'react-dom/server',
         'browserify',
         'node-jsx',
-        'projects/emitter/server/serverUtil.js',
+        'mywebsites/emitter/server/serverUtil.js',
     ], function (React,
                  ReactDOMServer,
                  browserify,
@@ -49,9 +49,9 @@ app.get('/emitter', function (req, res) {
 
         jsx.install();
         app.use('/bundle.js', function (req, res) {
-            browserify('./projects/emitter/server/app.js').transform('reactify').bundle().pipe(res);
+            browserify('./mywebsites/emitter/server/app.js').transform('reactify').bundle().pipe(res);
         });
-        const Emitter = require('./projects/emitter/client/emitterView.jsx');
+        const Emitter = require('./mywebsites/emitter/client/emitterView.jsx');
         res.setHeader('Content-Type', 'text/html');
         res.end(ReactDOMServer.renderToStaticMarkup(
             React.DOM.body(
@@ -88,7 +88,7 @@ app.get('/emitter', function (req, res) {
 app.get('/backend', function (req, res) {
 
     const Colu = require('colu')
-    const util = require('./projects/backend/util/util.js')
+    const util = require('./mywebsites/backend/util/util.js')
     const utilColuFunctions = util.processRequests.coluCalls
     const utilEncoder = util.processRequests.encoder;
 
@@ -103,7 +103,7 @@ app.get('/backend', function (req, res) {
         app.use(bodyParser.json())
         app.use(bodyParser.urlencoded({extended: true}));
         
-        var html = Handlebars.compile(fs.readFileSync('./projects/backend/index.html', 'utf8'))();
+        var html = Handlebars.compile(fs.readFileSync('./mywebsites/backend/index.html', 'utf8'))();
         res.send(html);
         
 
@@ -165,11 +165,11 @@ app.get('/backend', function (req, res) {
 
 app.get('/simplerestapi', function (req, res) {
 
-    var html = Handlebars.compile(fs.readFileSync('./projects/simplerestapi/index.html', 'utf8'))();
+    var html = Handlebars.compile(fs.readFileSync('./mywebsites/simplerestapi/index.html', 'utf8'))();
     res.send(html)
 
     const sqlite = require('sqlite3').verbose()
-    var db = new sqlite.Database('./projects/simplerestapi/my_db.db')
+    var db = new sqlite.Database('./mywebsites/simplerestapi/my_db.db')
 
     db.serialize(function () {
         var query = 'CREATE TABLE if not exists profiles (id INTEGER NOT NULL PRIMARY KEY, name varchar, bio varchar, fb_id varchar)'
