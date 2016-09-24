@@ -217,7 +217,7 @@
 
     $('#encode').on('submit', function (e) {
         e.preventDefault();
-        $('.ladda-spinner').removeClass('hide')
+        $('.encodeNumberBtn .ladda-spinner').removeClass('hide')
         var laddaEncodeNumber = Ladda.create( document.querySelector( '.encodeNumberBtn' ) )
         laddaEncodeNumber.start()
 
@@ -231,7 +231,7 @@
             success: function (data) {
                 laddaEncodeNumber.stop()
                 $('.encodeNumberBtn').removeClass('ladda-button')
-                $('.ladda-spinner').addClass('hide')
+                $('.encodeNumberBtn .ladda-spinner').addClass('hide')
 
                 $('.encodedNumber').removeClass('hide')
                 $('.encodedNumberError').addClass('hide')
@@ -240,7 +240,7 @@
             error: function (err) {
                 laddaEncodeNumber.stop()
                 $('.encodeNumberBtn').removeClass('ladda-button')
-                $('.ladda-spinner').addClass('hide')
+                $('.encodeNumberBtn .ladda-spinner').addClass('hide')
 
                 $('.encodedNumber').addClass('hide')
                 $('.encodedNumberError').removeClass('hide')
