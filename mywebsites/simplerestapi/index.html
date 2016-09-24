@@ -55,6 +55,12 @@
 </div>
 
 <script>
+
+    function escapeUnescapeHtml(text){
+        text = text.split('<').join('&lt')
+        text = text.split('>').join('&gt')
+        return text
+    }
     function getAndRenderAllProfiles() {
         $.ajax({
             type: 'get',
@@ -66,7 +72,7 @@
                     html += '<div class="row editPerson">'
                     triplet.forEach(function (person) {
                         html += '<div class="col-xs-4">' +
-                                ' <span class="col-xs-8">' + person.name + ' </span>' +
+                                ' <span class="col-xs-8">' +  escapeUnescapeHtml(person.name)  + ' </span>' +
                                 ' <button class="btn btn-danger col-xs-2" type="button" onclick="deleteProfile(\'' + person.id + '\')"> Delete </button>' +
                                 ' <button class="btn btn-info col-xs-2" type="button" data-toggle="modal" data-target="#editPersonModal" data-person=' + person.id + '> Edit </button>' +
                                 ' </div>'
