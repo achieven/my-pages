@@ -1,0 +1,104 @@
+<html>
+<head>
+    <script src="./node_modules/jquery/dist/jquery.min.js"></script>
+    <script src="./node_modules/bootstrap/dist/js/bootstrap.min.js"></script>
+    <link rel="stylesheet" href="./node_modules/bootstrap/dist/css/bootstrap.min.css"/>
+</head>
+<body>
+<div class="container">
+    <div class="">
+        Get Assets:
+        <form id="assets" action="assets" method="get">
+            <button class="row col-xs-12 btn btn-default assets" type='submit'>Get Assets
+            </button>
+        </form>
+    </div>
+
+    <form id="issue" name="issue" action="issue" method="put">
+        Issue Asset
+        <div class="row">
+            <button class="col-xs-12" type='submit'>Issue Assets</button>
+        </div>
+    </form>
+
+
+    <form id="send" action="send" method="post">
+        toAddress: <input type="text" name="toAddress" class="toAddress row col-xs-12">
+        assetId:<input type="text" name="assetId" class="assetId row col-xs-12">
+        amount:<input type="number" name="amount" class="amount row col-xs-12">
+        <div class="row">
+            <button class="col-xs-12" type='submit'>Send Asset</button>
+        </div>
+    </form>
+
+    <form id="encode" action="encode" method="post">
+        number: <input type="text" name="encode" class="encode row col-xs-12">
+        <div class="row">
+            <button class="col-xs-12" type='submit'>Encode</button>
+        </div>
+    </form>
+
+
+</div>
+
+<script>
+    $('#assets').on('submit', function (e) {
+        e.preventDefault();
+        $.ajax({
+            type: 'get',
+            url: '/backend/assets',
+            contentType: 'application/json',
+            success: function () {
+                console.log('success assets')
+            }
+        })
+    })
+
+    $('#issue').on('submit', function (e) {
+        e.preventDefault();
+        var data = [{assetName: '', amount: Math.pow(2,54)-2, something: true},{assetName: 'achi1', amount: 100}];
+        console.log(JSON.stringify(data));
+        $.ajax({
+            type: 'put',
+            url: '/backend/issue',
+            data: JSON.stringify({assets: data}),
+            contentType: 'application/json',
+            success: function () {
+                console.log('success issue')
+            }
+        });
+    });
+
+    $('#send').on('submit', function (e) {
+        e.preventDefault();
+        var data = {toAddress: $('.toAddress').val(), assetId: $('.assetId').val(), amount: 0, something: 'sdfg'};
+        console.log(JSON.stringify(data));
+        $.ajax({
+            type: 'post',
+            url: '/backend/send',
+            data: JSON.stringify(data),
+            contentType: 'application/json',
+            success: function () {
+                console.log('success send')
+            }
+        })
+    })
+
+    $('#encode').on('submit', function (e) {
+        e.preventDefault();
+        var data = {number: $('.encode').val()};
+        console.log(data);
+        $.ajax({
+            type: 'post',
+            url: '/backend/encode',
+            data: JSON.stringify(data),
+            contentType: 'application/json',
+            success: function () {
+                console.log('success encode')
+            }
+        })
+    })
+</script>
+
+</body>
+</html>
