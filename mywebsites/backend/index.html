@@ -3,74 +3,190 @@
     <script src="./node_modules/jquery/dist/jquery.min.js"></script>
     <script src="./node_modules/bootstrap/dist/js/bootstrap.min.js"></script>
     <link rel="stylesheet" href="./node_modules/bootstrap/dist/css/bootstrap.min.css"/>
+    <script src="./node_modules/ladda/dist/spin.min.js  "></script>
+    <script src="./node_modules/ladda/dist/ladda.min.js"></script>
+    <link rel="stylesheet" href="./node_modules/ladda/dist/ladda.min.css">
+
 </head>
 <body>
 <div class="container">
-    <div class="">
-        Get Assets:
-        <form id="assets" action="assets" method="get">
-            <button class="row col-xs-12 btn btn-default assets" type='submit'>Get Assets
-            </button>
-        </form>
-    </div>
+    <h2>On this page you can:</h2>
+    <h4>1. View the assets in your wallet</h4>
+    <h4>2. Issue an asset to your wallet</h4>
+    <h4>3. Send an asset from your wallet to another address</h4>
+    <h4>4. Encode a number according to colored coins protocol (which has some similarity to IEEE-754 double
+        percision) </h4>
+    <hr>
+    <form id="assets" name="assets" action="assets" method="get">
+        <div class="row">
+            <div class="col-xs-12">
+                <h4 class="col-xs-3"> View Assets</h4>
+                <button class="col-xs-6 btn btn-info getAssetsBtn" data-style="zoom-in" type='submit'>
+                    <span class="ladda-label">Get Assets</span>
+                    <span class="ladda-spinner"></span>
+                </button>
+            </div>
+        </div>
+    </form>
+    <label class="getAssetsErrorHeader hide col-xs-12">Error when trying to get assets:
+        <label class="getAssetsErrorResponse">
+        </label>
+    </label>
+    <label class="getAssetsHeader hide col-xs-12">Local asset are:
+        <ul class="getAssetsResponse"></ul>
+    </label>
+    <hr>
 
     <form id="issue" name="issue" action="issue" method="put">
-        Issue Asset
         <div class="row">
-            <button class="col-xs-12" type='submit'>Issue Assets</button>
+            <div class="col-xs-12">
+                <h4 class="col-xs-3">Issue Asset</h4>
+                <button class="col-xs-6 btn btn-info issueAssetsBtn" data-style="zoom-in" type='submit'>Issue Assets</button>
+            </div>
         </div>
     </form>
+    <label class="issueAssetsErrorHeader hide col-xs-12">Error when trying to issue assets:
+        <ul class="issueAssetsErrorResponse">
+        </ul>
+    </label>
+    <label class="issueAssetsHeader hide col-xs-12">Assets that were issued:
+        <ul class="issueAssetsResponse"></ul>
+    </label>
+    <hr>
 
-
+    <h4 class="col-xs-12">Send Asset</h4>
     <form id="send" action="send" method="post">
-        toAddress: <input type="text" name="toAddress" class="toAddress row col-xs-12">
-        assetId:<input type="text" name="assetId" class="assetId row col-xs-12">
-        amount:<input type="number" name="amount" class="amount row col-xs-12">
+        <div class="row col-xs-12">
+            <h5 class="col-xs-2"> To Address:</h5>
+            <div class="col-xs-10">
+                <input type="text" name="toAddress" class="toAddress form-control">
+            </div>
+        </div>
+        <div class="row col-xs-12">
+            <h5 class="col-xs-2"> Asset Id:</h5>
+            <div class="col-xs-10">
+                <input type="text" name="assetId" class="assetId form-control">
+            </div>
+        </div>
+        <div class="row col-xs-12">
+            <h5 class="col-xs-2"> Amount:</h5>
+            <div class="col-xs-10">
+                <input type="text" name="amount" class="amount form-control">
+            </div>
+        </div>
         <div class="row">
-            <button class="col-xs-12" type='submit'>Send Asset</button>
+            <div class="col-xs-3"></div>
+            <button class="btn btn-info col-xs-6 sendAssetBtn" data-style="zoom-in" type='submit'>Send Asset</button>
         </div>
     </form>
+    <label class="sendAssetErrorHeader hide col-xs-12">Error when trying to send asset:
+        <ul class="sendAssetErrorResponse"></ul>
+    </label>
+    <label class="sendAssetHeader hide col-xs-12">Transaction id of this transaction:
+        <ul class="sendAssetResponse"></ul>
+    </label>
+    <hr>
 
-    <form id="encode" action="encode" method="post">
-        number: <input type="text" name="encode" class="encode row col-xs-12">
-        <div class="row">
-            <button class="col-xs-12" type='submit'>Encode</button>
+    <div class="row">
+        <form id="encode" action="encode" method="post" class="col-xs-6">
+            <h5 class="col-xs-3">Insert number</h5>
+            <div class="col-xs-7">
+                <input type="text" name="encode" class="encode form-control">
+            </div>
+            <button class="btn btn-info col-xs-2 encodeNumberBtn" data-style="zoom-in" type='submit'>Encode</button>
+        </form>
+        <div class="col-xs-6">
+            <h5 class="col-xs-3">Encoding result:</h5>
+            <h5 class="encodedNumber hide col-xs-9"></h5>
+            <h5 class="encodedNumberError hide col-xs-9"></h5>
         </div>
-    </form>
+    </div>
 
 
 </div>
 
 <script>
+
     $('#assets').on('submit', function (e) {
         e.preventDefault();
+        $('.ladda-spinner').removeClass('hide')
+        var laddaGetAssets = Ladda.create( document.querySelector( '.getAssetsBtn' ) )
+        laddaGetAssets.start()
+
         $.ajax({
             type: 'get',
             url: '/backend/assets',
             contentType: 'application/json',
-            success: function () {
-                console.log('success assets')
+            success: function (data) {
+                laddaGetAssets.stop()
+                $('.getAssetsBtn').removeClass('ladda-button')
+                $('.ladda-spinner').addClass('hide')
+
+                $('.getAssetsErrorHeader').addClass('hide')
+                $('.getAssetsHeader').removeClass('hide')
+                var html = ''
+                data.forEach(function (asset) {
+                    html += '<li> ASSET_ID:  ' + asset.assetId + ',  ASSET_ADDRESS:  ' + asset.address +'</li>'
+                })
+                $('.getAssetsResponse').html(html || 'No assets associated with this wallet')
+            },
+            error: function (err) {
+                laddaGetAssets.stop()
+                $('.getAssetsBtn').removeClass('ladda-button')
+                $('.ladda-spinner').addClass('hide')
+
+                $('.getAssetsHeader').addClass('hide')
+                $('.getAssetsErrorHeader').removeClass('hide')
+                $('.getAssetsErrorResponse').text(err)
             }
         })
     })
 
     $('#issue').on('submit', function (e) {
         e.preventDefault();
-        var data = [{assetName: '', amount: Math.pow(2,54)-2, something: true},{assetName: 'achi1', amount: 100}];
+        $('.ladda-spinner').removeClass('hide')
+        var laddaIssueAssets = Ladda.create( document.querySelector( '.issueAssetsBtn' ) )
+        laddaIssueAssets.start()
+
+        var data = [{assetName: '', amount: Math.pow(2, 54) - 2, something: true}, {assetName: 'achi1', amount: 100}];
         console.log(JSON.stringify(data));
         $.ajax({
             type: 'put',
             url: '/backend/issue',
             data: JSON.stringify({assets: data}),
             contentType: 'application/json',
-            success: function () {
-                console.log('success issue')
+            success: function (data) {
+                laddaIssueAssets.stop()
+                $('.issueAssetsBtn').removeClass('ladda-button')
+                $('.ladda-spinner').addClass('hide')
+
+                $('.issueAssetsErrorHeader').addClass('hide')
+                $('.issueAssetsHeader').removeClass('hide')
+                var html = ''
+                data.forEach(function (assetId) {
+                    html += '<li>' + assetId + '</li>'
+                })
+                $('.issueAssetsResponse').html(html)
+
+            },
+            error: function (err) {
+                laddaIssueAssets.stop()
+                $('.issueAssetsBtn').removeClass('ladda-button')
+                $('.ladda-spinner').addClass('hide')
+
+                $('.issueAssetsHeader').addClass('hide')
+                $('.issueAssetsErrorHeader').removeClass('hide')
+                $('.issueAssetsErrorResponse').text(err)
             }
         });
     });
 
     $('#send').on('submit', function (e) {
         e.preventDefault();
+        $('.ladda-spinner').removeClass('hide')
+        var laddaSendAsset = Ladda.create( document.querySelector( '.sendAssetBtn' ) )
+        laddaSendAsset.start()
+
         var data = {toAddress: $('.toAddress').val(), assetId: $('.assetId').val(), amount: 0, something: 'sdfg'};
         console.log(JSON.stringify(data));
         $.ajax({
@@ -78,14 +194,33 @@
             url: '/backend/send',
             data: JSON.stringify(data),
             contentType: 'application/json',
-            success: function () {
-                console.log('success send')
+            success: function (data) {
+                laddaSendAsset.stop()
+                $('.sendAssetBtn').removeClass('ladda-button')
+                $('.ladda-spinner').addClass('hide')
+
+                $('.sendAssetErrorHeader').addClass('hide')
+                $('.sendAssetHeader').removeClass('hide')
+                $('.sendAssetResponse').text(data)
+            },
+            error: function (err) {
+                laddaSendAsset.stop()
+                $('.sendAssetBtn').removeClass('ladda-button')
+                $('.ladda-spinner').addClass('hide')
+
+                $('.sendAssetHeader').addClass('hide')
+                $('.sendAssetErrorHeader').removeClass('hide')
+                $('.sendAssetErrorResponse').text(err.responseText)
             }
         })
     })
 
     $('#encode').on('submit', function (e) {
         e.preventDefault();
+        $('.ladda-spinner').removeClass('hide')
+        var laddaEncodeNumber = Ladda.create( document.querySelector( '.encodeNumberBtn' ) )
+        laddaEncodeNumber.start()
+
         var data = {number: $('.encode').val()};
         console.log(data);
         $.ajax({
@@ -93,8 +228,23 @@
             url: '/backend/encode',
             data: JSON.stringify(data),
             contentType: 'application/json',
-            success: function () {
-                console.log('success encode')
+            success: function (data) {
+                laddaEncodeNumber.stop()
+                $('.encodeNumberBtn').removeClass('ladda-button')
+                $('.ladda-spinner').addClass('hide')
+
+                $('.encodedNumber').removeClass('hide')
+                $('.encodedNumberError').addClass('hide')
+                $('.encodedNumber').text(data)
+            },
+            error: function (err) {
+                laddaEncodeNumber.stop()
+                $('.encodeNumberBtn').removeClass('ladda-button')
+                $('.ladda-spinner').addClass('hide')
+
+                $('.encodedNumber').addClass('hide')
+                $('.encodedNumberError').removeClass('hide')
+                $('.encodedNumberError').text(err.responseText)
             }
         })
     })

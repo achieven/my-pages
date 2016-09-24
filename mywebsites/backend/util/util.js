@@ -115,7 +115,7 @@ var processRequests = {
                                 var assetId = asset.assetId
                                 if (!assetsIdsSet.has(assetId)) {
                                     assetsIdsSet.add(assetId)
-                                    assetsIds.push(assetId)
+                                    assetsIds.push({assetId:asset.assetId, address:asset.address})
                                 }
                             });
                             return callback(null, assetsIds);
