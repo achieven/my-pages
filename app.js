@@ -199,6 +199,9 @@ app.get('/simplerestapi', function (req, res) {
     })
     app.post('/simplerestapi/profiles', function (req, res) {
         var name = JSON.stringify(req.body.name)
+        if(name.length > 23){
+            return res.status(400).send('name cant be longer than 23 letters!')
+        }
         var bio = JSON.stringify(req.body.bio)
         var fb_id = JSON.stringify(req.body.fb_id)
         var query = 'INSERT INTO profiles (name, bio, fb_id) VALUES ( ' + name + ', ' + bio + ', ' + fb_id + ')'
@@ -218,6 +221,11 @@ app.get('/simplerestapi', function (req, res) {
 
     app.put('/simplerestapi/profiles/:profileId', function (req, res) {
         var setName = req.body.newName ? 'name=' + JSON.stringify(req.body.newName) : ''
+        if(setName){
+            if(req.body.newName.length > 23){
+                return res.status(400).send('name cant be longer than 23 letters')
+            }
+        }
         var setBio = req.body.newBio ? 'bio=' + JSON.stringify(req.body.newBio) : ''
         var setFb_id = req.body.newFb_id ? 'fb_id=' + JSON.stringify(req.body.newFb_id) : ''
         var whatToSetArray = [setName, setBio, setFb_id]
