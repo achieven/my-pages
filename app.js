@@ -12,11 +12,11 @@ app.use(express.static(__dirname + '/'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended: true}));
 
-app.get('/', function (req, res) {
+app.get('/', function (req, res, next) {
     var projects = [
-        {name: 'emitter', link: '/emitter', githubLink: 'https://github.com/achieven/emitter'},
-        {name: 'backend', link: '/backend', githubLink: 'https://github.com/achieven/backend'},
-        {name: 'Simple Rest Api', link: '/simplerestapi', githubLink: 'https://github.com/achieven/simplerestapi'}
+        {name: 'emitter', link: '/emitter'},
+        {name: 'backend', link: '/backend'},
+        {name: 'Simple Rest Api', link: '/simplerestapi'}
     ]
     var mainProjectGithubLink = 'https://github.com/achieven/my-pages'
     var html = Handlebars.compile(fs.readFileSync('./app.html', 'utf8'))({
@@ -260,6 +260,22 @@ app.get('/simplerestapi', function (req, res) {
             res.status(200).send(response)
         })
     })
+})
+
+app.get('/messengerReact', function (req, res) {
+    var webpack = require('webpack')
+    var webpackDevMiddleware = require('webpack-dev-middleware')
+    var webpackHotMiddleware = require('webpack-hot-middleware')
+    var config = require('./webpack.config')
+
+    var app = new (require('express'))()
+    var port = 1337
+
+    var compiler = webpack(config)
+    app.use(webpackDevMiddleware(compiler, {noInfo: true, publicPath: config.output.publicPath}))
+    app.use(webpackHotMiddleware(compiler))
+
+    res.sendFile(__dirname + '/messengerReact/index.html')
 })
 
 module.exports = app;
