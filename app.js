@@ -16,7 +16,9 @@ app.get('/', function (req, res, next) {
     var projects = [
         {name: 'emitter', link: '/emitter'},
         {name: 'backend', link: '/backend'},
-        {name: 'Simple Rest Api', link: '/simplerestapi'}
+        {name: 'Simple Rest Api', link: '/simplerestapi'},
+        {name: 'React Messenger', link: '/messengerReact'}
+
     ]
     var mainProjectGithubLink = 'https://github.com/achieven/my-pages'
     var html = Handlebars.compile(fs.readFileSync('./app.html', 'utf8'))({
@@ -102,10 +104,10 @@ app.get('/backend', function (req, res) {
     colu.on('connect', function () {
         app.use(bodyParser.json())
         app.use(bodyParser.urlencoded({extended: true}));
-        
+
         var html = Handlebars.compile(fs.readFileSync('./mywebsites/backend/index.html', 'utf8'))();
         res.send(html);
-        
+
 
         function validateBody(req, res) {
             if (!(Object.prototype.toString.call(req.body) === '[object Object]')) {
@@ -199,7 +201,7 @@ app.get('/simplerestapi', function (req, res) {
     })
     app.post('/simplerestapi/profiles', function (req, res) {
         var name = JSON.stringify(req.body.name)
-        if(name.length > 23){
+        if (name.length > 23) {
             return res.status(400).send('name cant be longer than 23 letters!')
         }
         var bio = JSON.stringify(req.body.bio)
@@ -221,8 +223,8 @@ app.get('/simplerestapi', function (req, res) {
 
     app.put('/simplerestapi/profiles/:profileId', function (req, res) {
         var setName = req.body.newName ? 'name=' + JSON.stringify(req.body.newName) : ''
-        if(setName){
-            if(req.body.newName.length > 23){
+        if (setName) {
+            if (req.body.newName.length > 23) {
                 return res.status(400).send('name cant be longer than 23 letters')
             }
         }
@@ -265,17 +267,23 @@ app.get('/simplerestapi', function (req, res) {
 app.get('/messengerReact', function (req, res) {
     var webpack = require('webpack')
     var webpackDevMiddleware = require('webpack-dev-middleware')
-    var webpackHotMiddleware = require('webpack-hot-middleware')
-    var config = require('./webpack.config')
-
-    var app = new (require('express'))()
-    var port = 1337
+    //var webpackHotMiddleware = require('webpack-hot-middleware')
+    var config = require('./mywebsites/messengerReact/webpack.config')
 
     var compiler = webpack(config)
     app.use(webpackDevMiddleware(compiler, {noInfo: true, publicPath: config.output.publicPath}))
-    app.use(webpackHotMiddleware(compiler))
-
-    res.sendFile(__dirname + '/messengerReact/index.html')
+    //app.use(webpackHotMiddleware(compiler))
+    var html = Handlebars.compile(fs.readFileSync('./mywebsites/messengerReact/index.html', 'utf8'))()
+    res.status(200).send(html)
+    
+    io.of('/startMessenger').on('connection', function(socket){
+        socket.on('clientMessage', function(data){
+            socket.emit('serverMessage', data.toUpperCase())
+        })
+        socket.on('disconnect', function(){
+            console.log('messenger - client disconnected')
+        })
+    })
 })
 
 module.exports = app;
