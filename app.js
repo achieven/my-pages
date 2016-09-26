@@ -269,12 +269,12 @@ app.get('/messengerReact', function (req, res) {
     var webpack = require('webpack')
     var webpackDevMiddleware = require('webpack-dev-middleware')
     //var webpackHotMiddleware = require('webpack-hot-middleware')
-    var config = require('./mywebsites/messengerReact/webpack.config')
+    var config = require('./mywebsites/messenger/webpack.config')
 
     var compiler = webpack(config)
     app.use(webpackDevMiddleware(compiler, {noInfo: true, publicPath: config.output.publicPath}))
     //app.use(webpackHotMiddleware(compiler))
-    var html = Handlebars.compile(fs.readFileSync('./mywebsites/messengerReact/index.html', 'utf8'))()
+    var html = Handlebars.compile(fs.readFileSync('./mywebsites/messenger/index.html', 'utf8'))()
     res.status(200).send(html)
     let allClientSocekts = []
     let socketId = 0
