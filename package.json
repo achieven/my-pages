@@ -26,6 +26,7 @@
     "requirejs": "^2.3.2",
     "socket.io": "^1.4.8",
     "sqlite3": "^3.1.4",
+    "user-agent-parser": "^0.6.0",
     "webpack": "^1.13.2",
     "webpack-dev-middleware": "^1.8.2",
     "webpack-hot-middleware": "^2.12.2"

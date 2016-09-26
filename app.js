@@ -8,12 +8,31 @@ const socketio = require('socket.io')
 const http = require('http')
 const server = http.Server(app);
 const io = socketio(server);
+const userAgentParser = require('user-agent-parser')
 
 app.use(express.static(__dirname + '/'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended: true}));
 
 app.get('/', function (req, res, next) {
+    const parser = new userAgentParser()
+    const parsedUserAgent = parser.setUA(req.headers['user-agent']).getResult()
+    const browser = parsedUserAgent.browser, browserName = browser.name, browserVersion = browser.version
+    const engine = parsedUserAgent.engine, engineName = engine.name, engineVersion = engine.version
+    const os = parsedUserAgent.os, osName = os.name, osVersion = os.version
+    const device = parsedUserAgent.device, deviceModel = device.model, deviceVendor = device.vendor, deviceType= device.type
+    const cpu = parsedUserAgent.cpu, cpuArchitecture = cpu.architecture
+    console.log(browserName, browserVersion)
+    console.log(engineName, engineVersion)
+    console.log(osName, osVersion)
+    console.log(deviceModel, deviceVendor, deviceType)
+    console.log(cpuArchitecture)
+    
+    
+
+    const userIp = req.connection.remoteAddress
+    console.log(userIp)
+
     var projects = [
         {name: 'emitter', link: '/emitter'},
         {name: 'backend', link: '/backend'},
@@ -278,15 +297,15 @@ app.get('/messengerReact', function (req, res) {
     res.status(200).send(html)
     let allClientSocekts = []
     let socketId = 0
-    io.of('/messengerReact').on('connection', function(socket){
+    io.of('/messengerReact').on('connection', function (socket) {
         socketId++
-        if(!socket.socketId){
+        if (!socket.socketId) {
             socket.socketId = socketId
             allClientSocekts.push(socket)
         }
-        socket.on('clientMessage', function(data){
-            allClientSocekts.forEach(function(_socket){
-                if(socket.socketId != _socket.socketId){
+        socket.on('clientMessage', function (data) {
+            allClientSocekts.forEach(function (_socket) {
+                if (socket.socketId != _socket.socketId) {
                     _socket.emit('serverMessageToOther', data)
                 }
                 else {
@@ -294,8 +313,8 @@ app.get('/messengerReact', function (req, res) {
                 }
             })
         })
-        socket.on('disconnect', function(){
-            allClientSocekts = allClientSocekts.filter(function(_socket){
+        socket.on('disconnect', function () {
+            allClientSocekts = allClientSocekts.filter(function (_socket) {
                 return socket.socketId != _socket.socketId
             })
         })
