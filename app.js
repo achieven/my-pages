@@ -70,7 +70,7 @@ app.get('/emitter', function (req, res) {
                 })
             )
         ));
-        io.of('/emitterPage').once('connection', function (socket) {
+        io.of('/emitterPage').on('connection', function (socket) {
             socket.on('/startEmitter', function (data) {
                 if (socket.emitJsonIntervalId) {
                     clearInterval(socket.emitJsonIntervalId);
