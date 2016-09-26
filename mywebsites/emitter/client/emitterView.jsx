@@ -178,7 +178,7 @@ let Emitter = React.createClass({
                 <script src="../.././node_modules/chartist/dist/chartist.min.js"></script>
                 <link rel="stylesheet" href="../.././node_modules/chartist/dist/chartist.min.css"/>
                 <script src="./.././node_modules/requirejs/require.js"></script>
-\                <script src="/bundle.js"></script>
+                <script src="/bundle.js"></script>
             </div>
         )
     },

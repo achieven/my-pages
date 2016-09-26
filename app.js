@@ -1,3 +1,4 @@
+'use strict'
 const express = require('express');
 const app = express();
 const Handlebars = require('handlebars');
@@ -12,11 +13,13 @@ app.use(express.static(__dirname + '/'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended: true}));
 
-app.get('/', function (req, res) {
+app.get('/', function (req, res, next) {
     var projects = [
-        {name: 'emitter', link: '/emitter', githubLink: 'https://github.com/achieven/emitter'},
-        {name: 'backend', link: '/backend', githubLink: 'https://github.com/achieven/backend'},
-        {name: 'Simple Rest Api', link: '/simplerestapi', githubLink: 'https://github.com/achieven/simplerestapi'}
+        {name: 'emitter', link: '/emitter'},
+        {name: 'backend', link: '/backend'},
+        {name: 'Simple Rest Api', link: '/simplerestapi'},
+        {name: 'React Messenger (still in construction)', link: '/messengerReact'}
+
     ]
     var mainProjectGithubLink = 'https://github.com/achieven/my-pages'
     var html = Handlebars.compile(fs.readFileSync('./app.html', 'utf8'))({
@@ -102,10 +105,10 @@ app.get('/backend', function (req, res) {
     colu.on('connect', function () {
         app.use(bodyParser.json())
         app.use(bodyParser.urlencoded({extended: true}));
-        
+
         var html = Handlebars.compile(fs.readFileSync('./mywebsites/backend/index.html', 'utf8'))();
         res.send(html);
-        
+
 
         function validateBody(req, res) {
             if (!(Object.prototype.toString.call(req.body) === '[object Object]')) {
@@ -199,7 +202,7 @@ app.get('/simplerestapi', function (req, res) {
     })
     app.post('/simplerestapi/profiles', function (req, res) {
         var name = JSON.stringify(req.body.name)
-        if(name.length > 23){
+        if (name.length > 23) {
             return res.status(400).send('name cant be longer than 23 letters!')
         }
         var bio = JSON.stringify(req.body.bio)
@@ -221,8 +224,8 @@ app.get('/simplerestapi', function (req, res) {
 
     app.put('/simplerestapi/profiles/:profileId', function (req, res) {
         var setName = req.body.newName ? 'name=' + JSON.stringify(req.body.newName) : ''
-        if(setName){
-            if(req.body.newName.length > 23){
+        if (setName) {
+            if (req.body.newName.length > 23) {
                 return res.status(400).send('name cant be longer than 23 letters')
             }
         }
@@ -258,6 +261,43 @@ app.get('/simplerestapi', function (req, res) {
         db.run(query, function (err, response) {
             if (err) return res.status(err.code || err.status || 500).send(err)
             res.status(200).send(response)
+        })
+    })
+})
+
+app.get('/messengerReact', function (req, res) {
+    var webpack = require('webpack')
+    var webpackDevMiddleware = require('webpack-dev-middleware')
+    //var webpackHotMiddleware = require('webpack-hot-middleware')
+    var config = require('./mywebsites/messenger/webpack.config')
+
+    var compiler = webpack(config)
+    app.use(webpackDevMiddleware(compiler, {noInfo: true, publicPath: config.output.publicPath}))
+    //app.use(webpackHotMiddleware(compiler))
+    var html = Handlebars.compile(fs.readFileSync('./mywebsites/messenger/index.html', 'utf8'))()
+    res.status(200).send(html)
+    let allClientSocekts = []
+    let socketId = 0
+    io.of('/messengerReact').on('connection', function(socket){
+        socketId++
+        if(!socket.socketId){
+            socket.socketId = socketId
+            allClientSocekts.push(socket)
+        }
+        socket.on('clientMessage', function(data){
+            allClientSocekts.forEach(function(_socket){
+                if(socket.socketId != _socket.socketId){
+                    _socket.emit('serverMessageToOther', data)
+                }
+                else {
+                    _socket.emit('serverMessageToMe', data)
+                }
+            })
+        })
+        socket.on('disconnect', function(){
+            allClientSocekts = allClientSocekts.filter(function(_socket){
+                return socket.socketId != _socket.socketId
+            })
         })
     })
 })

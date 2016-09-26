@@ -163,8 +163,8 @@
                 $('.issueAssetsErrorHeader').addClass('hide')
                 $('.issueAssetsHeader').removeClass('hide')
                 var html = ''
-                data.forEach(function (assetId) {
-                    html += '<li>' + assetId + '</li>'
+                data.forEach(function (asset) {
+                    html += '<li>' + asset + '</li>'
                 })
                 $('.issueAssetsResponse').html(html)
 
