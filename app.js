@@ -1,3 +1,4 @@
+'use strict'
 const express = require('express');
 const app = express();
 const Handlebars = require('handlebars');
@@ -69,7 +70,7 @@ app.get('/emitter', function (req, res) {
                 })
             )
         ));
-        io.of('/emitterPage').on('connection', function (socket) {
+        io.of('/emitterPage').once('connection', function (socket) {
             socket.on('/startEmitter', function (data) {
                 if (socket.emitJsonIntervalId) {
                     clearInterval(socket.emitJsonIntervalId);
@@ -275,13 +276,28 @@ app.get('/messengerReact', function (req, res) {
     //app.use(webpackHotMiddleware(compiler))
     var html = Handlebars.compile(fs.readFileSync('./mywebsites/messengerReact/index.html', 'utf8'))()
     res.status(200).send(html)
-    
-    io.of('/startMessenger').on('connection', function(socket){
+    let allClientSocekts = []
+    let socketId = 0
+    io.of('/messengerReact').on('connection', function(socket){
+        socketId++
+        if(!socket.socketId){
+            socket.socketId = socketId
+            allClientSocekts.push(socket)
+        }
         socket.on('clientMessage', function(data){
-            socket.emit('serverMessage', data.toUpperCase())
+            allClientSocekts.forEach(function(_socket){
+                if(socket.socketId != _socket.socketId){
+                    _socket.emit('serverMessageToOther', data)
+                }
+                else {
+                    _socket.emit('serverMessageToMe', data)
+                }
+            })
         })
         socket.on('disconnect', function(){
-            console.log('messenger - client disconnected')
+            allClientSocekts = allClientSocekts.filter(function(_socket){
+                return socket.socketId != _socket.socketId
+            })
         })
     })
 })
