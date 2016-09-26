@@ -18,7 +18,7 @@ app.get('/', function (req, res, next) {
         {name: 'emitter', link: '/emitter'},
         {name: 'backend', link: '/backend'},
         {name: 'Simple Rest Api', link: '/simplerestapi'},
-        {name: 'React Messenger', link: '/messengerReact'}
+        {name: 'React Messenger (still in construction)', link: '/messengerReact'}
 
     ]
     var mainProjectGithubLink = 'https://github.com/achieven/my-pages'
