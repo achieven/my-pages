@@ -9,6 +9,7 @@ const http = require('http')
 const server = http.Server(app);
 const io = socketio(server);
 const userAgentParser = require('user-agent-parser')
+const util = require('./util/util')
 
 app.use(express.static(__dirname + '/'));
 app.use(bodyParser.json());
@@ -27,17 +28,13 @@ app.get('/', function (req, res, next) {
     console.log(osName, osVersion)
     console.log(deviceModel, deviceVendor, deviceType)
     console.log(cpuArchitecture)
-    
-    
-
-    const userIp = req.connection.remoteAddress
-    console.log(userIp)
 
     var projects = [
         {name: 'emitter', link: '/emitter'},
         {name: 'backend', link: '/backend'},
         {name: 'Simple Rest Api', link: '/simplerestapi'},
-        {name: 'React Messenger (still in construction)', link: '/messengerReact'}
+        {name: 'React Messenger (still in construction)', link: '/messengerReact'},
+        {name: 'userDetails', link: '/userDetails'}
 
     ]
     var mainProjectGithubLink = 'https://github.com/achieven/my-pages'
@@ -319,6 +316,39 @@ app.get('/messengerReact', function (req, res) {
             })
         })
     })
+})
+app.get('/userDetails', function(req, res){
+    const parser = new userAgentParser()
+    const parsedUserAgent = parser.setUA(req.headers['user-agent']).getResult()
+    const browser = parsedUserAgent.browser, browserName = browser.name, browserVersion = browser.version
+    const engine = parsedUserAgent.engine, engineName = engine.name, engineVersion = engine.version
+    const os = parsedUserAgent.os, osName = os.name, osVersion = os.version
+    const device = parsedUserAgent.device, deviceModel = device.model, deviceVendor = device.vendor, deviceType= device.type
+    const cpu = parsedUserAgent.cpu, cpuArchitecture = cpu.architecture
+
+    var html = Handlebars.compile(fs.readFileSync('./mywebsites/userDetails/index.html', 'utf8'))({
+        contents: {
+            ipinfo: {
+                ipAddress: {header: 'IP address', classname: 'ipAddress'},
+                hostname: {header: 'Host Name', classname: 'hostname'},
+                country: {header: 'Country', classname: 'country'},
+                city: {header: 'City', classname: 'city'},
+                log: {header: 'Coordinates', classname: 'log'},
+                org: {header: 'Internet Provider', classname: 'org'}
+            },
+            userAgentInfo: {
+                browser: {header: 'Browser', content: {name: {header: 'Name', content: browserName}, version: {header: 'Version', content: browserVersion}}},
+                engine: {header: 'Engine', content: {name: {header: 'Name', content: engineName}, version: {header: 'Version', content: engineVersion}}},
+                os: {header: 'Operating System', content: {name: {header: 'Name', content: osName}, version: {header: 'Version', content: osVersion}}},
+                device: {header: 'Device', content: {model: {header: 'Model', content: deviceModel}, vendor: {header: 'Vendor', content: deviceVendor}, type: {header: 'Type', content: deviceType}}},
+                cpu: {header: 'Cpu', content: {architecture: {header: 'Architecture', content: cpuArchitecture}}}
+            }
+           
+        }
+
+    });
+    res.send(html);
+    
 })
 
 module.exports = app;
