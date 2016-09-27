@@ -4,6 +4,8 @@
     <link rel="stylesheet" href="./node_modules/bootstrap/dist/css/bootstrap.min.css">
     <script src="./node_modules/bootstrap/dist/js/bootstrap.min.js"></script>
     <script src="./node_modules/ua-parser-js/dist/ua-parser.min.js"></script>
+    <script src="../.././node_modules/chartist/dist/chartist.min.js"></script>
+    <link rel="stylesheet" href="../.././node_modules/chartist/dist/chartist.min.css"/>
 </head>
 <body>
 <div class="container">
@@ -29,8 +31,8 @@
         <div class="col-xs-10">
             {{#each content}}
             <div class="col-md-4 col-sm-12">
-                <h5 class="col-md-3">{{this.header}}</h5>
-                <div class="col-md-9">
+                <h5 class="col-md-4">{{this.header}}</h5>
+                <div class="col-md-8">
                     <div class="form-control alert-success">{{this.content}}</div>
                 </div>
             </div>
@@ -41,9 +43,98 @@
     {{/each}}
     {{/equal}}
     {{/each}}
+    <h4> Website Usage Statistics:</h4>
+    <div class="row">
+        <div class="col-xs-4">
+            <label>Browser</label>
+            <div class="browserChartsEmpty">No statistics yet</div>
+            <div class="browserCharts"></div>
+        </div>
+        <div class="col-xs-4">
+            <label>Engine</label>
+            <div class="engineChartsEmpty">No statistics yet</div>
+            <div class="engineCharts"></div>
+        </div>
+        <div class="col-xs-4">
+            <label>Operating System</label>
+            <div class="osChartsEmpty">No statistics yet</div>
+            <div class="osCharts"></div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-xs-4">
+            <label>Device</label>
+            <div class="deviceChartsEmpty">No statistics yet</div>
+            <div class="deviceCharts"></div>
+        </div>
+        <div class="col-xs-4">
+            <label>CPU</label>
+            <div class="cpuChartsEmpty">No statistics yet</div>
+            <div class="cpuCharts"></div>
+        </div>
+    </div>
 </div>
 
 <script>
+    function setLabelsAndSeries(usersdata) {
+        var usersChartData = []
+        usersdata.forEach(function (category) {
+            var categoryString = ''
+            Object.keys(category).forEach(function (key) {
+                categoryString += ' ' + category[key]
+            })
+            categoryString.trim() && usersChartData.push(categoryString)
+        })
+        var numberOfEachCategory = {}
+        usersChartData.forEach(function (brand) {
+            if (numberOfEachCategory[brand]) {
+                numberOfEachCategory[brand]++
+            }
+            else {
+                if (brand) {
+                    numberOfEachCategory[brand] = 1
+                }
+            }
+        })
+        var keys = Object.keys(numberOfEachCategory)
+        var values = keys.map(function (key) {
+                    return numberOfEachCategory[key]
+                }
+        )
+        return {usersdata: usersdata, numberOfEachCategory: numberOfEachCategory, keys: keys, values: values};
+    }
+    function getAndRenderCharts() {
+        function getAndRenderChart(category) {
+            $.ajax({
+                type: 'get',
+                url: '/userDetails/userdata/' + category,
+                contentType: 'application/json',
+                success: function (usersdata) {
+                    var labelsAndSeries = setLabelsAndSeries(usersdata);
+                    usersdata = labelsAndSeries.usersdata;
+                    var numberOfEachCategory = labelsAndSeries.numberOfEachCategory;
+                    var labels = labelsAndSeries.keys;
+                    var series = labelsAndSeries.values;
+                    $('.' + category + 'ChartsEmpty').toggleClass('hide', series.length > 0)
+                    new Chartist.Pie(
+                            '.' + category + 'Charts',
+                            {
+                                series: series,
+                                labels: labels
+                            }
+                    )
+
+                }
+            })
+        }
+
+        getAndRenderChart('browser')
+        getAndRenderChart('engine')
+        getAndRenderChart('os')
+        getAndRenderChart('device')
+        getAndRenderChart('cpu')
+
+    }
     $.get("http://ipinfo.io", function (response) {
         $('.ipAddress').text(response.ip)
         $('.hostname').text(response.hostname)
@@ -61,15 +152,20 @@
 
 
         }
-        console.log(data)
         $.ajax({
             type: 'post',
-            url: '/userDetails/userData',
+            url: '/userDetails/userdata',
             data: JSON.stringify(data),
             contentType: 'application/json',
             success: function () {
+                getAndRenderCharts()
+            },
+            error: function () {
+                getAndRenderCharts()
             }
         })
+
+
     }, "jsonp");
 </script>
 

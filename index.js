@@ -16,7 +16,6 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended: true}));
 
 app.get('/', function (req, res, next) {
-    
 
     var projects = [
         {name: 'emitter', link: '/emitter'},
@@ -309,11 +308,11 @@ app.get('/messengerReact', function (req, res) {
 app.get('/userDetails', function(req, res){
     const parser = new userAgentParser()
     const parsedUserAgent = parser.setUA(req.headers['user-agent']).getResult()
-    const browser = parsedUserAgent.browser, browserName = browser.name, browserVersion = browser.version
-    const engine = parsedUserAgent.engine, engineName = engine.name, engineVersion = engine.version
-    const os = parsedUserAgent.os, osName = os.name, osVersion = os.version
-    const device = parsedUserAgent.device, deviceModel = device.model, deviceVendor = device.vendor, deviceType= device.type
-    const cpu = parsedUserAgent.cpu, cpuArchitecture = cpu.architecture
+    var browser = parsedUserAgent.browser, browserName = browser.name, browserVersion = browser.version
+    var engine = parsedUserAgent.engine, engineName = engine.name, engineVersion = engine.version
+    var os = parsedUserAgent.os, osName = os.name, osVersion = os.version
+    var device = parsedUserAgent.device, deviceModel = device.model, deviceVendor = device.vendor, deviceType= device.type
+    var cpu = parsedUserAgent.cpu, cpuArchitecture = cpu.architecture
 
     var html = Handlebars.compile(fs.readFileSync('./mywebsites/userDetails/index.html', 'utf8'))({
         contents: {
@@ -322,7 +321,7 @@ app.get('/userDetails', function(req, res){
                 hostname: {header: 'Host Name', classname: 'hostname'},
                 country: {header: 'Country', classname: 'country'},
                 city: {header: 'City', classname: 'city'},
-                loc: {header: 'Coordinates', classname: 'loc'},
+                log: {header: 'Coordinates', classname: 'log'},
                 org: {header: 'Internet Provider', classname: 'org'}
             },
             userAgentInfo: {
@@ -332,15 +331,92 @@ app.get('/userDetails', function(req, res){
                 device: {header: 'Device', content: {model: {header: 'Model', content: deviceModel}, vendor: {header: 'Vendor', content: deviceVendor}, type: {header: 'Type', content: deviceType}}},
                 cpu: {header: 'Cpu', content: {architecture: {header: 'Architecture', content: cpuArchitecture}}}
             }
-           
+
         }
 
     });
     res.send(html);
 
-    app.post('/userDetails/userData', function(req,res){
-        console.log(req.body)
+    const sqlite = require('sqlite3').verbose()
+    var db = new sqlite.Database('./mywebsites/userDetails/my_db.db')
+    db.serialize(function () {
+        var query = 'CREATE TABLE if not exists userdata (ip varchar, hostname varchar, country varchar, city varchar, loc varchar, org varchar, browserName varchar, browserVersion varchar, engineName varchar, engineVersion varchar, osName varchar, osVersion varchar, deviceModel varchar, deviceVendor varchar, deviceType varchar, cpuArchitecture varchar)'
+        db.run(query, function (err, response) {
+            console.log('create table:', err, response)
+        });
     })
+    
+    app.post('/userDetails/userdata', function(req,res){
+
+        const ipAddress = JSON.stringify(req.body.ipAddress) || JSON.stringify("")
+        const hostname = JSON.stringify(req.body.hostname) || JSON.stringify("")
+        const country = JSON.stringify(req.body.country) || JSON.stringify("")
+        const city = JSON.stringify(req.body.city) || JSON.stringify("")
+        const loc = JSON.stringify(req.body.loc) || JSON.stringify("")
+        const org = JSON.stringify(req.body.org) || JSON.stringify("")
+        browserName = JSON.stringify(browserName) || JSON.stringify("")
+        browserVersion = JSON.stringify(browserVersion) || JSON.stringify("")
+        engineName = JSON.stringify(engineName) || JSON.stringify("")
+        engineVersion = JSON.stringify(engineVersion) || JSON.stringify("")
+        osName = JSON.stringify(osName) || JSON.stringify("")
+        osVersion = JSON.stringify(osVersion) || JSON.stringify("")
+        deviceModel = JSON.stringify(deviceModel) || JSON.stringify("")
+        deviceVendor = JSON.stringify(deviceVendor) || JSON.stringify("")
+        deviceType = JSON.stringify(deviceType) || JSON.stringify("")
+        cpuArchitecture = JSON.stringify(cpuArchitecture) || JSON.stringify("")
+        
+        //const myips = ['188.120.148.70', '176.13.227.56']
+        const myips = []
+        if(myips.indexOf(JSON.parse(ipAddress)) < 0) {
+            var query = 'INSERT INTO userdata (ip, hostname, country, city, loc, org, browserName, browserVersion, engineName, engineVersion, osName, osVersion, deviceModel, deviceVendor, deviceType,  cpuArchitecture) VALUES ( ' +
+                ipAddress + ', ' + hostname + ', ' + country + ', ' + city + ', ' + loc + ', ' + org + ', ' +
+                browserName + ', ' + browserVersion + ', ' + engineName + ', ' + engineVersion + ', ' + osName + ', ' + osVersion + ', ' + deviceModel + ', ' + deviceVendor + ', ' + deviceType + ', ' + cpuArchitecture + ')'
+            db.run(query, function (err, response) {
+                if (err) return res.status(err.code || err.status || 500).send(err)
+            })
+        }
+        else {
+            return res.status(200).send('nothing was inserted')
+        }
+    })
+    app.get('/userDetails/userdata/browser', function(req,res){
+        var query = 'SELECT browserName FROM userdata'
+        db.all(query, function (err, usersdata) {
+            if (err) return res.status(err.code || err.status || 500).send(err)
+            return res.status(200).send(usersdata)
+        })
+    })
+    app.get('/userDetails/userdata/engine', function(req,res){
+        var query = 'SELECT engineName FROM userdata'
+        db.all(query, function (err, usersdata) {
+            if (err) return res.status(err.code || err.status || 500).send(err)
+            return res.status(200).send(usersdata)
+        })
+    })
+    app.get('/userDetails/userdata/os', function(req,res){
+        var query = 'SELECT osName FROM userdata'
+        db.all(query, function (err, usersdata) {
+            if (err) return res.status(err.code || err.status || 500).send(err)
+            return res.status(200).send(usersdata)
+        })
+    })
+    app.get('/userDetails/userdata/device', function(req,res){
+        var query = 'SELECT deviceModel, deviceVendor FROM userdata'
+        db.all(query, function (err, usersdata) {
+            if (err) return res.status(err.code || err.status || 500).send(err)
+            return res.status(200).send(usersdata)
+        })
+    })
+    app.get('/userDetails/userdata/cpu', function(req,res){
+        var query = 'SELECT cpuArchitecture FROM userdata'
+        db.all(query, function (err, usersdata) {
+            if (err) return res.status(err.code || err.status || 500).send(err)
+            return res.status(200).send(usersdata)
+        })
+    })
+
+    
+    
 })
 
 module.exports = app;
