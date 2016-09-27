@@ -49,8 +49,27 @@
         $('.hostname').text(response.hostname)
         $('.country').text(response.country)
         $('.city').text(response.city)
-        $('.log').text(response.loc)
+        $('.loc').text(response.loc)
         $('.org').text(response.org)
+        var data = {
+            ipAddress: response.ip,
+            hostname: response.hostname,
+            country: response.country,
+            city: response.city,
+            loc: response.loc,
+            org: response.org
+
+
+        }
+        console.log(data)
+        $.ajax({
+            type: 'post',
+            url: '/userDetails/userData',
+            data: JSON.stringify(data),
+            contentType: 'application/json',
+            success: function () {
+            }
+        })
     }, "jsonp");
 </script>
 

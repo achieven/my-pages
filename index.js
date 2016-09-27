@@ -16,25 +16,14 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended: true}));
 
 app.get('/', function (req, res, next) {
-    const parser = new userAgentParser()
-    const parsedUserAgent = parser.setUA(req.headers['user-agent']).getResult()
-    const browser = parsedUserAgent.browser, browserName = browser.name, browserVersion = browser.version
-    const engine = parsedUserAgent.engine, engineName = engine.name, engineVersion = engine.version
-    const os = parsedUserAgent.os, osName = os.name, osVersion = os.version
-    const device = parsedUserAgent.device, deviceModel = device.model, deviceVendor = device.vendor, deviceType= device.type
-    const cpu = parsedUserAgent.cpu, cpuArchitecture = cpu.architecture
-    console.log(browserName, browserVersion)
-    console.log(engineName, engineVersion)
-    console.log(osName, osVersion)
-    console.log(deviceModel, deviceVendor, deviceType)
-    console.log(cpuArchitecture)
+    
 
     var projects = [
         {name: 'emitter', link: '/emitter'},
         {name: 'backend', link: '/backend'},
         {name: 'Simple Rest Api', link: '/simplerestapi'},
         {name: 'React Messenger (still in construction)', link: '/messengerReact'},
-        {name: 'userDetails', link: '/userDetails'}
+        {name: 'User Details (responsive)', link: '/userDetails'}
 
     ]
     var mainProjectGithubLink = 'https://github.com/achieven/my-pages'
@@ -333,7 +322,7 @@ app.get('/userDetails', function(req, res){
                 hostname: {header: 'Host Name', classname: 'hostname'},
                 country: {header: 'Country', classname: 'country'},
                 city: {header: 'City', classname: 'city'},
-                log: {header: 'Coordinates', classname: 'log'},
+                loc: {header: 'Coordinates', classname: 'loc'},
                 org: {header: 'Internet Provider', classname: 'org'}
             },
             userAgentInfo: {
@@ -348,7 +337,10 @@ app.get('/userDetails', function(req, res){
 
     });
     res.send(html);
-    
+
+    app.post('/userDetails/userData', function(req,res){
+        console.log(req.body)
+    })
 })
 
 module.exports = app;
