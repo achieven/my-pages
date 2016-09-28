@@ -10,6 +10,13 @@ const server = http.Server(app);
 const io = socketio(server);
 const userAgentParser = require('user-agent-parser')
 const util = require('./util/util')
+const winston = require('winston')
+var serverLogger = new (winston.Logger)({
+    transports: [
+        new (winston.transports.File)({ filename: 'server.log' })
+    ]
+});
+
 
 app.use(express.static(__dirname + '/'));
 app.use(bodyParser.json());
@@ -382,18 +389,21 @@ app.get('/userDetails', function (req, res) {
         var ipExistsQuery = 'SELECT ipUserAgent from userdata'
 
         db.all(ipExistsQuery, function (err, allIpUserAgents) {
+            serverLogger.log('info','ipUserAgent: ' + ipUserAgent + ' allIpUserAgents:' + JSON.stringify(allIpUserAgents))
             if (allIpUserAgents.map(function (_ipUserAgent) {
                     return _ipUserAgent.ipUserAgent
                 }).indexOf(ipUserAgent) < 0) {
                 var query = 'INSERT INTO userdata (ipUserAgent, ip, hostname, country, city, loc, org, region, browserName, browserVersion, engineName, engineVersion, osName, osVersion, deviceModel, deviceVendor, deviceType,  cpuArchitecture) VALUES ( ' +
                     JSON.stringify(ipUserAgent) + ', ' + (JSON.stringify(req.body.ipAddress || "")) + ', ' + (JSON.stringify(req.body.hostname || "")) + ', ' + (JSON.stringify(req.body.country || "")) + ', ' + (JSON.stringify(req.body.city || "")) + ', ' + (JSON.stringify(req.body.loc || "")) + ', ' + (JSON.stringify(req.body.org || "")) + ', ' + (JSON.stringify(req.body.region || "")) + ', ' +
                     (JSON.stringify(browserName || "")) + ', ' + (JSON.stringify(browserVersion || "")) + ', ' + (JSON.stringify(engineName || "")) + ', ' + (JSON.stringify(engineVersion || "")) + ', ' + (JSON.stringify(osName || "")) + ', ' + (JSON.stringify(osVersion || "")) + ', ' + (JSON.stringify(deviceModel || "")) + ', ' + (JSON.stringify(deviceVendor || "")) + ', ' + (JSON.stringify(deviceType || "")) + ', ' + (JSON.stringify(cpuArchitecture || "")) + ')'
+                serverLogger.log('info','query: ' + query)
                 db.run(query, function (err, response) {
                     if (err) return res.status(err.code || err.status || 500).send(err)
                     res.status(200).send(response)
                 })
             }
             else {
+                serverLogger.log('info','nothing was inserted')
                 return res.status(200).send('nothing was inserted')
             }
         })
