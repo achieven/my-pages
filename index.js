@@ -22,7 +22,7 @@ app.get('/', function (req, res, next) {
         {name: 'backend', link: '/backend'},
         {name: 'Simple Rest Api', link: '/simplerestapi'},
         {name: 'React Messenger (still in construction)', link: '/messengerReact'},
-        {name: 'userDetails (responsive)', link: '/userDetails'}
+        {name: 'User Details (responsive)', link: '/userDetails'}
 
     ]
     var mainProjectGithubLink = 'https://github.com/achieven/my-pages'
@@ -305,14 +305,14 @@ app.get('/messengerReact', function (req, res) {
         })
     })
 })
-app.get('/userDetails', function(req, res){
+app.get('/userDetails', function (req, res) {
     const parser = new userAgentParser()
     const parsedUserAgent = parser.setUA(req.headers['user-agent']).getResult()
-    const browser = parsedUserAgent.browser, browserName = browser.name, browserVersion = browser.version
-    const engine = parsedUserAgent.engine, engineName = engine.name, engineVersion = engine.version
-    const os = parsedUserAgent.os, osName = os.name, osVersion = os.version
-    const device = parsedUserAgent.device, deviceModel = device.model, deviceVendor = device.vendor, deviceType= device.type
-    const cpu = parsedUserAgent.cpu, cpuArchitecture = cpu.architecture
+    var browser = parsedUserAgent.browser, browserName = browser.name, browserVersion = browser.version
+    var engine = parsedUserAgent.engine, engineName = engine.name, engineVersion = engine.version
+    var os = parsedUserAgent.os, osName = os.name, osVersion = os.version
+    var device = parsedUserAgent.device, deviceModel = device.model, deviceVendor = device.vendor, deviceType = device.type
+    var cpu = parsedUserAgent.cpu, cpuArchitecture = cpu.architecture
 
     var html = Handlebars.compile(fs.readFileSync('./mywebsites/userDetails/index.html', 'utf8'))({
         contents: {
@@ -321,22 +321,120 @@ app.get('/userDetails', function(req, res){
                 hostname: {header: 'Host Name', classname: 'hostname'},
                 country: {header: 'Country', classname: 'country'},
                 city: {header: 'City', classname: 'city'},
-                log: {header: 'Coordinates', classname: 'log'},
-                org: {header: 'Internet Provider', classname: 'org'}
+                loc: {header: 'Coordinates', classname: 'loc'},
+                org: {header: 'Internet Provider', classname: 'org'},
+                region: {header: 'Region', classname: 'region'},
             },
             userAgentInfo: {
-                browser: {header: 'Browser', content: {name: {header: 'Name', content: browserName}, version: {header: 'Version', content: browserVersion}}},
-                engine: {header: 'Engine', content: {name: {header: 'Name', content: engineName}, version: {header: 'Version', content: engineVersion}}},
-                os: {header: 'Operating System', content: {name: {header: 'Name', content: osName}, version: {header: 'Version', content: osVersion}}},
-                device: {header: 'Device', content: {model: {header: 'Model', content: deviceModel}, vendor: {header: 'Vendor', content: deviceVendor}, type: {header: 'Type', content: deviceType}}},
+                browser: {
+                    header: 'Browser',
+                    content: {
+                        name: {header: 'Name', content: browserName},
+                        version: {header: 'Version', content: browserVersion}
+                    }
+                },
+                engine: {
+                    header: 'Engine',
+                    content: {
+                        name: {header: 'Name', content: engineName},
+                        version: {header: 'Version', content: engineVersion}
+                    }
+                },
+                os: {
+                    header: 'Operating System',
+                    content: {name: {header: 'Name', content: osName}, version: {header: 'Version', content: osVersion}}
+                },
+                device: {
+                    header: 'Device',
+                    content: {
+                        model: {header: 'Model', content: deviceModel},
+                        vendor: {header: 'Vendor', content: deviceVendor},
+                        type: {header: 'Type', content: deviceType}
+                    }
+                },
                 cpu: {header: 'Cpu', content: {architecture: {header: 'Architecture', content: cpuArchitecture}}}
+            },
+            statisticsInfo: {
+                triplets: [{
+                    browser: {header: 'Browser'},
+                    engine: {header: 'Engine'},
+                    os: {header: 'OS'}
+                }, {
+                    device: {header: 'Device'},
+                    cpu: {header: 'Cpu'}
+                }]
             }
-           
         }
-
     });
     res.send(html);
-    
+
+    const sqlite = require('sqlite3').verbose()
+    var db = new sqlite.Database('./mywebsites/userDetails/my_db.db')
+    db.serialize(function () {
+        var query = 'CREATE TABLE if not exists userdata (ipUserAgent varchar NOT NULL PRIMARY KEY, ip varchar, hostname varchar, country varchar, city varchar, loc varchar, org varchar, region varchar, browserName varchar, browserVersion varchar, engineName varchar, engineVersion varchar, osName varchar, osVersion varchar, deviceModel varchar, deviceVendor varchar, deviceType varchar, cpuArchitecture varchar)'
+        db.run(query, function (err, response) {
+            console.log('create table:', err, response)
+        });
+    })
+
+    app.post('/userDetails/userdata', function (req, res) {
+        var ipUserAgent = req.body.ipAddress + osName + osVersion + engineName + engineVersion + browserName + browserVersion
+        var ipExistsQuery = 'SELECT ipUserAgent from userdata'
+
+        db.all(ipExistsQuery, function (err, allIpUserAgents) {
+            if (allIpUserAgents.map(function (_ipUserAgent) {
+                    return _ipUserAgent.ipUserAgent
+                }).indexOf(ipUserAgent) < 0) {
+                var query = 'INSERT INTO userdata (ipUserAgent, ip, hostname, country, city, loc, org, region, browserName, browserVersion, engineName, engineVersion, osName, osVersion, deviceModel, deviceVendor, deviceType,  cpuArchitecture) VALUES ( ' +
+                    JSON.stringify(ipUserAgent) + ', ' + (JSON.stringify(req.body.ipAddress || "")) + ', ' + (JSON.stringify(req.body.hostname || "")) + ', ' + (JSON.stringify(req.body.country || "")) + ', ' + (JSON.stringify(req.body.city || "")) + ', ' + (JSON.stringify(req.body.loc || "")) + ', ' + (JSON.stringify(req.body.org || "")) + ', ' + (JSON.stringify(req.body.region || "")) + ', ' +
+                    (JSON.stringify(browserName || "")) + ', ' + (JSON.stringify(browserVersion || "")) + ', ' + (JSON.stringify(engineName || "")) + ', ' + (JSON.stringify(engineVersion || "")) + ', ' + (JSON.stringify(osName || "")) + ', ' + (JSON.stringify(osVersion || "")) + ', ' + (JSON.stringify(deviceModel || "")) + ', ' + (JSON.stringify(deviceVendor || "")) + ', ' + (JSON.stringify(deviceType || "")) + ', ' + (JSON.stringify(cpuArchitecture || "")) + ')'
+                db.run(query, function (err, response) {
+                    if (err) return res.status(err.code || err.status || 500).send(err)
+                    res.status(200).send(response)
+                })
+            }
+            else {
+                return res.status(200).send('nothing was inserted')
+            }
+        })
+    })
+    app.get('/userDetails/userdata/browser', function (req, res) {
+        var query = 'SELECT browserName FROM userdata'
+        db.all(query, function (err, usersdata) {
+            if (err) return res.status(err.code || err.status || 500).send(err)
+            return res.status(200).send(usersdata)
+        })
+    })
+    app.get('/userDetails/userdata/engine', function (req, res) {
+        var query = 'SELECT engineName FROM userdata'
+        db.all(query, function (err, usersdata) {
+            if (err) return res.status(err.code || err.status || 500).send(err)
+            return res.status(200).send(usersdata)
+        })
+    })
+    app.get('/userDetails/userdata/os', function (req, res) {
+        var query = 'SELECT osName FROM userdata'
+        db.all(query, function (err, usersdata) {
+            if (err) return res.status(err.code || err.status || 500).send(err)
+            return res.status(200).send(usersdata)
+        })
+    })
+    app.get('/userDetails/userdata/device', function (req, res) {
+        var query = 'SELECT deviceModel, deviceVendor FROM userdata'
+        db.all(query, function (err, usersdata) {
+            if (err) return res.status(err.code || err.status || 500).send(err)
+            return res.status(200).send(usersdata)
+        })
+    })
+    app.get('/userDetails/userdata/cpu', function (req, res) {
+        var query = 'SELECT cpuArchitecture FROM userdata'
+        db.all(query, function (err, usersdata) {
+            if (err) return res.status(err.code || err.status || 500).send(err)
+            return res.status(200).send(usersdata)
+        })
+    })
+
+
 })
 
 module.exports = app;
