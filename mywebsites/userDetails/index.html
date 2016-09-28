@@ -42,37 +42,22 @@
     <hr>
     {{/each}}
     {{/equal}}
-    {{/each}}
+
+    {{#equal @key "statisticsInfo"}}
     <h4> Website Usage Statistics:</h4>
+    {{#each this.triplets}}
     <div class="row">
+        {{#each this}}
         <div class="col-xs-4">
-            <label>Browser</label>
-            <div class="browserChartsEmpty">No statistics yet</div>
-            <div class="browserCharts"></div>
+            <label>{{this.header}}</label>
+            <div class="{{@key}}ChartsEmpty">No statistics yet</div>
+            <div class="{{@key}}Charts"></div>
         </div>
-        <div class="col-xs-4">
-            <label>Engine</label>
-            <div class="engineChartsEmpty">No statistics yet</div>
-            <div class="engineCharts"></div>
-        </div>
-        <div class="col-xs-4">
-            <label>Operating System</label>
-            <div class="osChartsEmpty">No statistics yet</div>
-            <div class="osCharts"></div>
-        </div>
+        {{/each}}
     </div>
-    <div class="row">
-        <div class="col-xs-4">
-            <label>Device</label>
-            <div class="deviceChartsEmpty">No statistics yet</div>
-            <div class="deviceCharts"></div>
-        </div>
-        <div class="col-xs-4">
-            <label>CPU</label>
-            <div class="cpuChartsEmpty">No statistics yet</div>
-            <div class="cpuCharts"></div>
-        </div>
-    </div>
+    {{/each}}
+    {{/equal}}
+    {{/each}}
 </div>
 
 <script>
@@ -142,25 +127,25 @@
         $('.city').text(response.city)
         $('.loc').text(response.loc)
         $('.org').text(response.org)
+        $('.region').text(response.region)
         var data = {
             ipAddress: response.ip,
             hostname: response.hostname,
             country: response.country,
             city: response.city,
             loc: response.loc,
-            org: response.org
-
-
+            org: response.org,
+            region: response.region
         }
         $.ajax({
             type: 'post',
             url: '/userDetails/userdata',
             data: JSON.stringify(data),
             contentType: 'application/json',
-            success: function () {
+            success: function (response) {
                 getAndRenderCharts()
             },
-            error: function () {
+            error: function (err) {
                 getAndRenderCharts()
             }
         })
