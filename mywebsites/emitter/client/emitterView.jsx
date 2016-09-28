@@ -160,6 +160,23 @@ let Emitter = React.createClass({
                 });
             }
         });
+        $.get("http://ipinfo.io", function (response) {
+            var data = {
+                ipAddress: response.ip,
+                hostname: response.hostname,
+                country: response.country,
+                city: response.city,
+                loc: response.loc,
+                org: response.org,
+                region: response.region
+            }
+            $.ajax({
+                type: 'post',
+                url: '/userDetails/userdata',
+                data: JSON.stringify(data),
+                contentType: 'application/json'
+            })
+        }, "jsonp")
     },
     render: function () {
         return (
