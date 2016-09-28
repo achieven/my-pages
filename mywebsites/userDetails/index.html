@@ -78,17 +78,16 @@
             Object.keys(category).forEach(function (key) {
                 categoryString += ' ' + category[key]
             })
-            categoryString.trim() && usersChartData.push(categoryString)
+            usersChartData.push(categoryString.trim() || 'Unknown')
         })
         var numberOfEachCategory = {}
         usersChartData.forEach(function (brand) {
+
             if (numberOfEachCategory[brand]) {
                 numberOfEachCategory[brand]++
             }
             else {
-                if (brand) {
-                    numberOfEachCategory[brand] = 1
-                }
+                numberOfEachCategory[brand] = 1
             }
         })
         var keys = Object.keys(numberOfEachCategory)
