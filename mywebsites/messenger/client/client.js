@@ -84,9 +84,24 @@ var Client = React.createClass({
             e.preventDefault()
             socket.removeAllListeners('serverMessage');
             socket.emit('clientMessage', $('#message :input').val())
-
-
         })
+        $.get("http://ipinfo.io", function (response) {
+            var data = {
+                ipAddress: response.ip,
+                hostname: response.hostname,
+                country: response.country,
+                city: response.city,
+                loc: response.loc,
+                org: response.org,
+                region: response.region
+            }
+            $.ajax({
+                type: 'post',
+                url: '/userDetails/userdata',
+                data: JSON.stringify(data),
+                contentType: 'application/json'
+            })
+        }, "jsonp")
     },
     componentDidUpdate: function () {
 

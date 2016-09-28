@@ -374,47 +374,7 @@ app.get('/userDetails', function (req, res) {
         }
     });
     res.send(html);
-
-    const sqlite = require('sqlite3').verbose()
-    var db = new sqlite.Database('./mywebsites/userDetails/my_db.db')
-    db.serialize(function () {
-        var query = 'CREATE TABLE if not exists userdata (ipUserAgent varchar NOT NULL PRIMARY KEY, ip varchar, hostname varchar, country varchar, city varchar, loc varchar, org varchar, region varchar, browserName varchar, browserVersion varchar, engineName varchar, engineVersion varchar, osName varchar, osVersion varchar, deviceModel varchar, deviceVendor varchar, deviceType varchar, cpuArchitecture varchar)'
-        db.run(query, function (err, response) {
-            console.log('create table:', err, response)
-        });
-    })
-
-    app.post('/userDetails/userdata', function (req, res) {
-        const parser = new userAgentParser()
-        const parsedUserAgent = parser.setUA(req.headers['user-agent']).getResult()
-        var browser = parsedUserAgent.browser, browserName = browser.name, browserVersion = browser.version
-        var engine = parsedUserAgent.engine, engineName = engine.name, engineVersion = engine.version
-        var os = parsedUserAgent.os, osName = os.name, osVersion = os.version
-        var device = parsedUserAgent.device, deviceModel = device.model, deviceVendor = device.vendor, deviceType = device.type
-        var cpu = parsedUserAgent.cpu, cpuArchitecture = cpu.architecture
-        var ipUserAgent = req.body.ipAddress + osName + osVersion + engineName + engineVersion + browserName + browserVersion
-        var ipExistsQuery = 'SELECT ipUserAgent from userdata'
-
-        db.all(ipExistsQuery, function (err, allIpUserAgents) {
-            serverLogger.log('info','ipUserAgent: ' + ipUserAgent + ' allIpUserAgents:' + JSON.stringify(allIpUserAgents))
-            if (allIpUserAgents.map(function (_ipUserAgent) {
-                    return _ipUserAgent.ipUserAgent
-                }).indexOf(ipUserAgent) < 0) {
-                var query = 'INSERT INTO userdata (ipUserAgent, ip, hostname, country, city, loc, org, region, browserName, browserVersion, engineName, engineVersion, osName, osVersion, deviceModel, deviceVendor, deviceType,  cpuArchitecture) VALUES ( ' +
-                    JSON.stringify(ipUserAgent) + ', ' + (JSON.stringify(req.body.ipAddress || "")) + ', ' + (JSON.stringify(req.body.hostname || "")) + ', ' + (JSON.stringify(req.body.country || "")) + ', ' + (JSON.stringify(req.body.city || "")) + ', ' + (JSON.stringify(req.body.loc || "")) + ', ' + (JSON.stringify(req.body.org || "")) + ', ' + (JSON.stringify(req.body.region || "")) + ', ' +
-                    (JSON.stringify(browserName || "")) + ', ' + (JSON.stringify(browserVersion || "")) + ', ' + (JSON.stringify(engineName || "")) + ', ' + (JSON.stringify(engineVersion || "")) + ', ' + (JSON.stringify(osName || "")) + ', ' + (JSON.stringify(osVersion || "")) + ', ' + (JSON.stringify(deviceModel || "")) + ', ' + (JSON.stringify(deviceVendor || "")) + ', ' + (JSON.stringify(deviceType || "")) + ', ' + (JSON.stringify(cpuArchitecture || "")) + ')'
-                serverLogger.log('info','query: ' + query)
-                db.run(query, function (err, response) {
-                    if (err) return res.status(err.code || err.status || 500).send(err)
-                    res.status(200).send(response)
-                })
-            }
-            else {
-                serverLogger.log('info','nothing was inserted')
-                return res.status(200).send('nothing was inserted')
-            }
-        })
-    })
+    
     app.get('/userDetails/userdata/browser', function (req, res) {
         var query = 'SELECT browserName FROM userdata'
         db.all(query, function (err, usersdata) {
@@ -450,8 +410,46 @@ app.get('/userDetails', function (req, res) {
             return res.status(200).send(usersdata)
         })
     })
+})
 
+const sqlite = require('sqlite3').verbose()
+var db = new sqlite.Database('./mywebsites/userDetails/my_db.db')
+db.serialize(function () {
+    var query = 'CREATE TABLE if not exists userdata (ipUserAgent varchar NOT NULL PRIMARY KEY, ip varchar, hostname varchar, country varchar, city varchar, loc varchar, org varchar, region varchar, browserName varchar, browserVersion varchar, engineName varchar, engineVersion varchar, osName varchar, osVersion varchar, deviceModel varchar, deviceVendor varchar, deviceType varchar, cpuArchitecture varchar)'
+    db.run(query, function (err, response) {
+        console.log('create table:', err, response)
+    });
+})
 
+app.post('/userDetails/userdata', function (req, res) {
+    const parser = new userAgentParser()
+    const parsedUserAgent = parser.setUA(req.headers['user-agent']).getResult()
+    var browser = parsedUserAgent.browser, browserName = browser.name, browserVersion = browser.version
+    var engine = parsedUserAgent.engine, engineName = engine.name, engineVersion = engine.version
+    var os = parsedUserAgent.os, osName = os.name, osVersion = os.version
+    var device = parsedUserAgent.device, deviceModel = device.model, deviceVendor = device.vendor, deviceType = device.type
+    var cpu = parsedUserAgent.cpu, cpuArchitecture = cpu.architecture
+    var ipUserAgent = req.body.ipAddress + osName + osVersion + engineName + engineVersion + browserName + browserVersion
+    var ipExistsQuery = 'SELECT ipUserAgent from userdata'
+    db.all(ipExistsQuery, function (err, allIpUserAgents) {
+        serverLogger.log('info','ipUserAgent: ' + ipUserAgent + ' allIpUserAgents:' + JSON.stringify(allIpUserAgents))
+        if (allIpUserAgents.map(function (_ipUserAgent) {
+                return _ipUserAgent.ipUserAgent
+            }).indexOf(ipUserAgent) < 0) {
+            var query = 'INSERT INTO userdata (ipUserAgent, ip, hostname, country, city, loc, org, region, browserName, browserVersion, engineName, engineVersion, osName, osVersion, deviceModel, deviceVendor, deviceType,  cpuArchitecture) VALUES ( ' +
+                JSON.stringify(ipUserAgent) + ', ' + (JSON.stringify(req.body.ipAddress || "")) + ', ' + (JSON.stringify(req.body.hostname || "")) + ', ' + (JSON.stringify(req.body.country || "")) + ', ' + (JSON.stringify(req.body.city || "")) + ', ' + (JSON.stringify(req.body.loc || "")) + ', ' + (JSON.stringify(req.body.org || "")) + ', ' + (JSON.stringify(req.body.region || "")) + ', ' +
+                (JSON.stringify(browserName || "")) + ', ' + (JSON.stringify(browserVersion || "")) + ', ' + (JSON.stringify(engineName || "")) + ', ' + (JSON.stringify(engineVersion || "")) + ', ' + (JSON.stringify(osName || "")) + ', ' + (JSON.stringify(osVersion || "")) + ', ' + (JSON.stringify(deviceModel || "")) + ', ' + (JSON.stringify(deviceVendor || "")) + ', ' + (JSON.stringify(deviceType || "")) + ', ' + (JSON.stringify(cpuArchitecture || "")) + ')'
+            serverLogger.log('info','query: ' + query)
+            db.run(query, function (err, response) {
+                if (err) return res.status(err.code || err.status || 500).send(err)
+                res.status(200).send(response)
+            })
+        }
+        else {
+            serverLogger.log('info','nothing was inserted')
+            return res.status(200).send('nothing was inserted')
+        }
+    })
 })
 
 module.exports = app;
