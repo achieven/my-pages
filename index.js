@@ -385,6 +385,13 @@ app.get('/userDetails', function (req, res) {
     })
 
     app.post('/userDetails/userdata', function (req, res) {
+        const parser = new userAgentParser()
+        const parsedUserAgent = parser.setUA(req.headers['user-agent']).getResult()
+        var browser = parsedUserAgent.browser, browserName = browser.name, browserVersion = browser.version
+        var engine = parsedUserAgent.engine, engineName = engine.name, engineVersion = engine.version
+        var os = parsedUserAgent.os, osName = os.name, osVersion = os.version
+        var device = parsedUserAgent.device, deviceModel = device.model, deviceVendor = device.vendor, deviceType = device.type
+        var cpu = parsedUserAgent.cpu, cpuArchitecture = cpu.architecture
         var ipUserAgent = req.body.ipAddress + osName + osVersion + engineName + engineVersion + browserName + browserVersion
         var ipExistsQuery = 'SELECT ipUserAgent from userdata'
 
