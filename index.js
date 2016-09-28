@@ -25,8 +25,8 @@ app.use(bodyParser.urlencoded({extended: true}));
 app.get('/', function (req, res, next) {
 
     var projects = [
-        {name: 'emitter', link: '/emitter'},
-        {name: 'backend', link: '/backend'},
+        {name: 'Emitter', link: '/emitter'},
+        {name: 'Digital Wallet', link: '/backend'},
         {name: 'Simple Rest Api', link: '/simplerestapi'},
         {name: 'React Messenger (still in construction)', link: '/messengerReact'},
         {name: 'User Details (responsive)', link: '/userDetails'}
