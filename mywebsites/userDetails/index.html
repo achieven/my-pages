@@ -1,6 +1,8 @@
 <html>
 <head>
     <script src="./node_modules/jquery/dist/jquery.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="./node_modules/twitter-bootstrap/docs/assets/css/bootstrap.css">
+    <script type='text/javascript' src="/node_modules/twitter-bootstrap/docs/assets/js/bootstrap.min.js"></script>
     <link rel="stylesheet" href="./node_modules/bootstrap/dist/css/bootstrap.min.css">
     <script src="./node_modules/bootstrap/dist/js/bootstrap.min.js"></script>
     <script src="./node_modules/ua-parser-js/dist/ua-parser.min.js"></script>
@@ -45,12 +47,20 @@
 
     {{#equal @key "statisticsInfo"}}
     <h4> Website Usage Statistics:</h4>
+    <div class="row">
+        <label class="col-xs-2">Entrances</label>
+        <div class="uniqueEntrances col-xs-1"></div>
+        <i class="icon-info-sign entrancesTooltip" rel="tooltip" data-toggle="tooltip"
+           title="Number of unique entrances (different ip+user agent concatenation)">
+        </i>
+    </div>
     {{#each this.triplets}}
     <div class="row">
         {{#each this}}
         <div class="col-xs-4">
             <label>{{this.header}}</label>
-            <div class="{{@key}}ChartsEmpty">No statistics yet</div>
+            <div class="{{@key}}ChartsNotReady">Please wait while loading charts</div>
+            <div class="{{@key}}ChartsEmpty hide">No statistics yet</div>
             <div class="{{@key}}Charts"></div>
         </div>
         {{/each}}
@@ -101,6 +111,7 @@
                     var labels = labelsAndSeries.keys;
                     var series = labelsAndSeries.values;
                     $('.' + category + 'ChartsEmpty').toggleClass('hide', series.length > 0)
+                    $('.' + category + 'ChartsNotReady').addClass('hide')
                     new Chartist.Pie(
                             '.' + category + 'Charts',
                             {
@@ -143,9 +154,13 @@
             data: JSON.stringify(data),
             contentType: 'application/json',
             success: function (response) {
+                $('.entrancesTooltip').tooltip()
+                $('.uniqueEntrances').text(response.response)
                 getAndRenderCharts()
             },
-            error: function (err) {
+            error: function (response) {
+                $('.entrancesTooltip').tooltip()
+                $('.uniqueEntrances').text(response.response)
                 getAndRenderCharts()
             }
         })
