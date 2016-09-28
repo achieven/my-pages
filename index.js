@@ -25,8 +25,8 @@ app.use(bodyParser.urlencoded({extended: true}));
 app.get('/', function (req, res, next) {
 
     var projects = [
-        {name: 'emitter', link: '/emitter'},
-        {name: 'backend', link: '/backend'},
+        {name: 'Emitter', link: '/emitter'},
+        {name: 'Digital Wallet', link: '/backend'},
         {name: 'Simple Rest Api', link: '/simplerestapi'},
         {name: 'React Messenger (still in construction)', link: '/messengerReact'},
         {name: 'User Details (responsive)', link: '/userDetails'}
@@ -441,13 +441,13 @@ app.post('/userDetails/userdata', function (req, res) {
                 (JSON.stringify(browserName || "")) + ', ' + (JSON.stringify(browserVersion || "")) + ', ' + (JSON.stringify(engineName || "")) + ', ' + (JSON.stringify(engineVersion || "")) + ', ' + (JSON.stringify(osName || "")) + ', ' + (JSON.stringify(osVersion || "")) + ', ' + (JSON.stringify(deviceModel || "")) + ', ' + (JSON.stringify(deviceVendor || "")) + ', ' + (JSON.stringify(deviceType || "")) + ', ' + (JSON.stringify(cpuArchitecture || "")) + ')'
             serverLogger.log('info','query: ' + query)
             db.run(query, function (err, response) {
-                if (err) return res.status(err.code || err.status || 500).send({err: err, response: allIpUserAgents.length})
-                res.status(200).send({err: null, response: allIpUserAgents.length})
+                if (err) return res.status(err.code || err.status || 500).send({err: err, response: allIpUserAgents.length+1})
+                res.status(200).send({err: null, response: allIpUserAgents.length+1})
             })
         }
         else {
             serverLogger.log('info','nothing was inserted')
-            return res.status(200).send({err: 'nothing was inserted', response: allIpUserAgents.length})
+            return res.status(200).send({err: 'nothing was inserted', response: allIpUserAgents.length+1})
         }
     })
 })

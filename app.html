@@ -5,49 +5,54 @@
     <script src="./node_modules/bootstrap/dist/js/bootstrap.min.js"></script>
 </head>
 <body>
-<div class="container">
-    <div class="row">
-        <div class="col-xs-12">
-           <h2>Hello and welcome to my projects</h2>
-            <h3>The source code of this page can be found <a class="btn btn-primary" target="_blank" href={{mainProjectGithubLink}}>here</a></h3>
+<div style="background-color: yellowgreen">
+    <div class="container" style="padding-bottom: 30px">
+        <div class="row">
+            <div class="col-xs-12">
+                <h3>The source code of this page can be found <a class="btn btn-primary" target="_blank"
+                                                                 href={{mainProjectGithubLink}}>here</a></h3>
+            </div>
         </div>
-    </div>
-    <h4> My current online projects are listed here:</h4>
-    <div class="row">
-        {{#each projects}}
-        <div class="col-xs-12">
-            <label for="">
-                See the website itself:
-                <a class="btn btn-info" target="_blank" href={{link}}>{{name}}</a>
-            </label>
+        <h4 class="row col-xs-12"></h4>
+        <div class="row" style="background-color: red;   border-radius: 6px">
+            <div class="col-sm-5 col-xs-8">
+                {{#each projects}}
+                <div class="row col-xs-9" style="margin-bottom: 15px">
+                    <a class="btn btn-info" target="_blank" href={{link}}>{{name}}</a>
+                </div>
+                {{/each}}
+            </div>
+
+            <div class="col-sm-7 col-xs-4">
+                <img src="http://www.graphics99.com/wp-content/uploads/2012/06/icushion-3gs-pillow-design-cool-funky-cushion-medium.jpg"
+                     alt="Cool IPhone Picture" class="img-thumbnail"/>
+            </div>
+            <h4 class="row col-xs-12"></h4>
         </div>
-        {{/each}}
 
     </div>
 
 
-</div>
-</div>
+    <script>
+        $.get("http://ipinfo.io", function (response) {
+            var data = {
+                ipAddress: response.ip,
+                hostname: response.hostname,
+                country: response.country,
+                city: response.city,
+                loc: response.loc,
+                org: response.org,
+                region: response.region
+            }
+            $.ajax({
+                type: 'post',
+                url: '/userDetails/userdata',
+                data: JSON.stringify(data),
+                contentType: 'application/json'
+            })
+        }, "jsonp")
 
-<script>
-    $.get("http://ipinfo.io", function (response) {
-        var data = {
-            ipAddress: response.ip,
-            hostname: response.hostname,
-            country: response.country,
-            city: response.city,
-            loc: response.loc,
-            org: response.org,
-            region: response.region
-        }
-        $.ajax({
-            type: 'post',
-            url: '/userDetails/userdata',
-            data: JSON.stringify(data),
-            contentType: 'application/json'
-        })
-    }, "jsonp")
-
-</script>
+    </script>
+</div>
 </body>
 </html>
