@@ -8,21 +8,28 @@ const maxRendersPerSecond = 2;
 let Form = React.createClass({
     render: function () {
         return (
-            <form id="emitFrequencyForm">
-                <div className="form-group">
-                    <div className="row">
-                        <div className="col-sm-4 col-xs-8">
-                            <label>Insert Emit Frequency Here: </label>
-                            <input className="form-control" type='number' placeholder='use only positive integers'/>
+            <div>
+                <h2 className="loadingMessage">Please wait while page is being loaded...</h2>
+                <div className="form hide">
+                    <form id="emitFrequencyForm">
+                        <div className="form-group">
+                            <div className="row">
+                                <div className="col-sm-4 col-xs-8">
+                                    <label className="insertFrequency"> Insert Emit Frequency Here:</label>
+                                    <input className="form-control" type='number'
+                                           placeholder='use only positive integers'/>
+                                </div>
+                            </div>
                         </div>
-                    </div>
+                        <div className="row">
+                            <div className="col-sm-4 col-xs-8">
+                                <button className="btn btn-default col-xs-12" type='submit'>Change emit frequency
+                                </button>
+                            </div>
+                        </div>
+                    </form >
                 </div>
-                <div className="row">
-                    <div className="col-sm-4 col-xs-8">
-                        <button className="btn btn-default col-xs-12" type='submit'>Change emit frequency</button>
-                    </div>
-                </div>
-            </form >
+            </div>
         );
     }
 });
@@ -160,6 +167,8 @@ let Emitter = React.createClass({
                 });
             }
         });
+        $('.loadingMessage').addClass('hide')
+        $('.form').removeClass('hide')
         $.get("http://ipinfo.io", function (response) {
             var data = {
                 ipAddress: response.ip,

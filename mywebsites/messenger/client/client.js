@@ -85,6 +85,7 @@ var Client = React.createClass({
             socket.removeAllListeners('serverMessage');
             socket.emit('clientMessage', $('#message :input').val())
         })
+        $('.loadingMessage').addClass('hide')
         $.get("http://ipinfo.io", function (response) {
             var data = {
                 ipAddress: response.ip,
