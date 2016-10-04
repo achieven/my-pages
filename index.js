@@ -7,7 +7,7 @@ const bodyParser = require('body-parser')
 const socketio = require('socket.io')
 const http = require('http')
 const server = http.Server(app);
-const io = socketio(server);
+// const io = socketio(server);
 const userAgentParser = require('user-agent-parser')
 const util = require('./util/util')
 const winston = require('winston')
@@ -47,6 +47,7 @@ server.listen(port, function () {
 });
 
 app.get('/emitter', function (req, res) {
+    const io = socketio(server);
     const requirejs = require('requirejs')
 
     requirejs([
@@ -277,6 +278,60 @@ app.get('/simplerestapi', function (req, res) {
 })
 
 app.get('/messengerReact', function (req, res) {
+    const io = socketio(server);
+    var redis = require('redis');
+    var redisClient = redis.createClient();
+    redisClient.on('connect', function() {
+        let allClientSockets = []
+        let socketId = 0
+        io.of('/messengerReact').on('connection', function (socket) {
+            socketId++
+            if (!socket.socketId) {
+                socket.socketId = socketId
+                allClientSockets.push(socket)
+            }
+            socket.on('clientMessage', function (data) {
+                data.socketId = socket.socketId
+                allClientSockets.forEach(function (_socket) {
+                    if (socket.socketId != _socket.socketId) {
+                        _socket.emit('serverMessageToOther', data)
+                    }
+                    else {
+                        _socket.emit('serverMessageToMe', data)
+                    }
+                })
+            })
+            socket.on('disconnect', function () {
+                allClientSockets = allClientSockets.filter(function (_socket) {
+                    return socket.socketId != _socket.socketId
+                })
+            })
+
+            socket.on('login', function(data){
+                console.log('login',socket.socketId)
+                redisClient.exists(data.username, function(err, reply){
+                    if(reply ===1){
+                        redisClient.get(data.username, function(err, reply){
+                            socket.emit('loginSuccess', data.username)
+                        })
+                    }
+                    else {
+                        socket.emit('loginFail')
+                    }
+                })
+            })
+            socket.on('signup', function(data){
+                console.log(data)
+                redisClient.set(data.username, data.password, function(err, reply){
+                        console.log(arguments)
+                    socket.emit('signupSuccess', data.username)
+                })
+
+            })
+    })
+    redisClient.on('error', function(err) {
+        console.log('err', err);
+    })
     var webpack = require('webpack')
     var webpackDevMiddleware = require('webpack-dev-middleware')
     //var webpackHotMiddleware = require('webpack-hot-middleware')
@@ -287,29 +342,7 @@ app.get('/messengerReact', function (req, res) {
     //app.use(webpackHotMiddleware(compiler))
     var html = Handlebars.compile(fs.readFileSync('./mywebsites/messenger/index.html', 'utf8'))()
     res.status(200).send(html)
-    let allClientSocekts = []
-    let socketId = 0
-    io.of('/messengerReact').on('connection', function (socket) {
-        socketId++
-        if (!socket.socketId) {
-            socket.socketId = socketId
-            allClientSocekts.push(socket)
-        }
-        socket.on('clientMessage', function (data) {
-            allClientSocekts.forEach(function (_socket) {
-                if (socket.socketId != _socket.socketId) {
-                    _socket.emit('serverMessageToOther', data)
-                }
-                else {
-                    _socket.emit('serverMessageToMe', data)
-                }
-            })
-        })
-        socket.on('disconnect', function () {
-            allClientSocekts = allClientSocekts.filter(function (_socket) {
-                return socket.socketId != _socket.socketId
-            })
-        })
+
     })
 })
 app.get('/userDetails', function (req, res) {
