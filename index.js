@@ -188,7 +188,7 @@ app.get('/simplerestapi', function (req, res) {
     res.send(html)
 
     const sqlite = require('sqlite3').verbose()
-    var db = new sqlite.Database('./mywebsites/simplerestapi/my_db.db')
+    var db = new sqlite.Database('./mywebsites/simplerestapi/' + process.env.NODE_ENV + '-simple-rest-api.db')
 
     db.serialize(function () {
         var query = 'CREATE TABLE if not exists profiles (id INTEGER NOT NULL PRIMARY KEY, name varchar, bio varchar, fb_id varchar)'
@@ -349,6 +349,14 @@ function messengerHelper() {
                     messages && socket.emit('showCorrespondence', JSON.parse(messages))
                 })
             })
+            socket.on('deleteCorrespondence', function(username){
+                var redisCorrespondence = 'correspondence' + username
+                redisClient.del(redisCorrespondence, function(err, reply){
+                    if(reply === 1){
+                        socket.emit('correspondenceDeleted')
+                    }
+                })
+            })
             socket.on('disconnect', function () {
                 allClientSockets = allClientSockets.filter(function (_socket) {
                     return socket.socketId != _socket.socketId
@@ -467,7 +475,7 @@ app.get('/userDetails', function (req, res) {
 })
 
 const sqlite = require('sqlite3').verbose()
-var db = new sqlite.Database('./mywebsites/userDetails/my_db.db')
+var db = new sqlite.Database('./mywebsites/userDetails/' + process.env.NODE_ENV + '-user-details.db')
 db.serialize(function () {
     var query = 'CREATE TABLE if not exists userdata (ipUserAgent varchar NOT NULL PRIMARY KEY, ip varchar, hostname varchar, country varchar, city varchar, loc varchar, org varchar, region varchar, browserName varchar, browserVersion varchar, engineName varchar, engineVersion varchar, osName varchar, osVersion varchar, deviceModel varchar, deviceVendor varchar, deviceType varchar, cpuArchitecture varchar)'
     db.run(query, function (err, response) {

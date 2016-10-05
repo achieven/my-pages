@@ -13,7 +13,7 @@ function escapeUnescapeHtml(text) {
 var LoginPage = React.createClass({
     render: function () {
         return (
-            <div>
+            <div className="row">
                 <div className="col-xs-3">
                     <form className="loginForm">
                         <div className="row">
@@ -97,22 +97,42 @@ var ChatPage = React.createClass({
     },
     startChat: function (username) {
         socket.emit('getCorrespondence', username)
-        socket.on('showCorrespondence', function(messages){
+        socket.on('showCorrespondence', function (messages) {
             chatComponent.setState({
                 messages: messages
             })
         })
-        $('.chatTop').removeClass('hide')
-        $('.messageForm').removeClass('hide')
+        $('.chatBottom').removeClass('hide')
         this.listenToUserMessages()
         $('.messageForm').on('submit', function (e) {
             e.preventDefault()
             socket.emit('clientMessage', {message: $('.messageForm :input').val(), sender: username})
         })
-        $('.saveCorrespondence').on('click', function(e){
+        $('.saveCorrespondence').on('click', function (e) {
             e.preventDefault()
             socket.removeAllListeners('saveCorrespondence')
-            socket.emit('saveCorrespondence',{username:chatComponent.state.username, messages: chatComponent.state.messages})
+            socket.emit('saveCorrespondence', {
+                username: chatComponent.state.username,
+                messages: chatComponent.state.messages
+            })
+        })
+        $('.deleteCorrespondence').on('click', function (e) {
+            e.preventDefault()
+            $('.deleteCorrespondenceWarning').removeClass('hide')
+            $('.yesDeleteCorrespondence').on('click', function (e) {
+                e.preventDefault()
+                socket.emit('deleteCorrespondence', chatComponent.state.username)
+                socket.on('correspondenceDeleted', function (data) {
+                    $('.deleteCorrespondenceWarning').addClass('hide')
+                    chatComponent.setState({
+                        messages: []
+                    })
+                })
+            })
+            $('.noDontDeleteCorrespondence').on('click', function (e) {
+                e.preventDefault()
+                $('.deleteCorrespondenceWarning').addClass('hide')
+            })
         })
         this.setState({
             username: username
@@ -146,7 +166,8 @@ var ChatPage = React.createClass({
             var color = data.sender === window.sessionStorage.getItem('chatUserName') ? chatComponent.colors.me : chatComponent.colors.others[(data.socketId) % (chatComponent.colors.others.length)]
             var sender = data.sender === window.sessionStorage.getItem('chatUserName') ? 'You' : data.sender
             messagesDomElements.push(
-                <MessageLine key={chatComponent.messageKey++} message={data.message} sender={sender} color={color}></MessageLine>
+                <MessageLine key={chatComponent.messageKey++} message={data.message} sender={sender}
+                             color={color}></MessageLine>
             )
         })
         return messagesDomElements
@@ -155,25 +176,15 @@ var ChatPage = React.createClass({
         var messages = this.buildMessagesToRender()
         return (
             <div className="container">
-                <div className="chatTop row hide">
-                    <div className="helloUserName col-xs-9">
-                        <h4>Hello {this.state.username}!</h4>
-                    </div>
-                    <div className="col-xs-3">
-                        <button className="btn btn-info saveCorrespondence">Save Correspondence</button>
-                    </div>
-                </div>
-
-
                 <h4 className="row col-xs-12"></h4>
-                <table className="table">
-                    <tbody>
-                    {messages || []}
-                    </tbody>
-                </table>
-                <form className="messageForm hide">
-                    <div className="form-group">
-                        <div className="row">
+                <div className="chatBottom hide" style={{position: 'fixed',bottom: 0, width: '100%'}}>
+                    <form className="messageForm row">
+                        <table className="table" style={{position: 'absolute', bottom: '223px'}}>
+                            <tbody>
+                            {messages || []}
+                            </tbody>
+                        </table>
+                        <div className="form-group">
                             <div className="col-xs-10">
                                 <input className="form-control" type='text' placeholder='message'/>
                             </div>
@@ -181,9 +192,32 @@ var ChatPage = React.createClass({
                                 <button className="btn btn-default" type='submit'>Submit</button>
                             </div>
                         </div>
+                        <div className="row col-xs-12 serverMessage"></div>
+                    </form >
+                    <h4 className="row col-xs-12"></h4>
+                    <div className="row">
+                        <div className="helloUserName col-xs-3">
+                            <h4>Hello {this.state.username}!</h4>
+                        </div>
+                        <div className="col-xs-6">
+                            <button className="btn btn-info text-center saveCorrespondence" style={{textAlign: 'center'}}>Save Chat</button>
+                        </div>
+                        <div className="col-xs-3">
+                            <button className="btn btn-danger deleteCorrespondence" type="button" style={{position: 'fixed', right: '20px'}}>Delete Chat
+                            </button>
+                            <div className="deleteCorrespondenceWarning hide">
+                                <div className="row col-xs-12 alert alert-warning">Are you sure you want to delete the
+                                    correspondence? This is irreversible
+                                </div>
+                                <div className="row col-xs-12">
+                                    <button className="btn btn-warning yesDeleteCorrespondence" type="button">Yes
+                                    </button>
+                                    <button className="btn btn-info noDontDeleteCorrespondence" type="button" style={{position: 'fixed', right: 0}}>No</button>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <div className="row col-xs-12 serverMessage"></div>
-                </form >
+                </div>
             </div>
         )
     },
