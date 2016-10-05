@@ -298,23 +298,6 @@ function messengerHelper() {
                 socket.socketId = socketId
                 allClientSockets.push(socket)
             }
-            socket.on('clientMessage', function (data) {
-                data.socketId = socket.socketId
-                allClientSockets.forEach(function (_socket) {
-                    if (socket.socketId != _socket.socketId) {
-                        _socket.emit('serverMessageToOther', data)
-                    }
-                    else {
-                        _socket.emit('serverMessageToMe', data)
-                    }
-                })
-            })
-            socket.on('disconnect', function () {
-                allClientSockets = allClientSockets.filter(function (_socket) {
-                    return socket.socketId != _socket.socketId
-                })
-            })
-
             socket.on('login', function (data) {
                 redisClient.exists(data.username, function (err, reply) {
                     if (reply === 1) {
@@ -344,8 +327,32 @@ function messengerHelper() {
                         })
                     }
                 })
-                
-
+            })
+            socket.on('clientMessage', function (data) {
+                data.socketId = socket.socketId
+                allClientSockets.forEach(function (_socket) {
+                    if (socket.socketId != _socket.socketId) {
+                        _socket.emit('serverMessageToOther', data)
+                    }
+                    else {
+                        _socket.emit('serverMessageToMe', data)
+                    }
+                })
+            })
+            socket.on('saveCorrespondence', function(data){
+                var redisCorrespondence = 'correspondence' + data.username
+                redisClient.set(redisCorrespondence, JSON.stringify(data.messages))
+            })
+            socket.on('getCorrespondence', function(username){
+                var redisCorrespondence = 'correspondence' + username
+                redisClient.get(redisCorrespondence, function(err, messages){
+                    messages && socket.emit('showCorrespondence', JSON.parse(messages))
+                })
+            })
+            socket.on('disconnect', function () {
+                allClientSockets = allClientSockets.filter(function (_socket) {
+                    return socket.socketId != _socket.socketId
+                })
             })
         })
         var webpack = require('webpack')

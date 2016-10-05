@@ -96,12 +96,23 @@ var ChatPage = React.createClass({
         }
     },
     startChat: function (username) {
-        $('.helloUserName').removeClass('hide')
+        socket.emit('getCorrespondence', username)
+        socket.on('showCorrespondence', function(messages){
+            chatComponent.setState({
+                messages: messages
+            })
+        })
+        $('.chatTop').removeClass('hide')
         $('.messageForm').removeClass('hide')
         this.listenToUserMessages()
         $('.messageForm').on('submit', function (e) {
             e.preventDefault()
             socket.emit('clientMessage', {message: $('.messageForm :input').val(), sender: username})
+        })
+        $('.saveCorrespondence').on('click', function(e){
+            e.preventDefault()
+            socket.removeAllListeners('saveCorrespondence')
+            socket.emit('saveCorrespondence',{username:chatComponent.state.username, messages: chatComponent.state.messages})
         })
         this.setState({
             username: username
@@ -144,7 +155,16 @@ var ChatPage = React.createClass({
         var messages = this.buildMessagesToRender()
         return (
             <div className="container">
-                <h4 className="helloUserName row col-xs-12 hide">Hello {this.state.username}!</h4>
+                <div className="chatTop row hide">
+                    <div className="helloUserName col-xs-9">
+                        <h4>Hello {this.state.username}!</h4>
+                    </div>
+                    <div className="col-xs-3">
+                        <button className="btn btn-info saveCorrespondence">Save Correspondence</button>
+                    </div>
+                </div>
+
+
                 <h4 className="row col-xs-12"></h4>
                 <table className="table">
                     <tbody>
