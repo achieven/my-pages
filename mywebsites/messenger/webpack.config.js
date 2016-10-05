@@ -23,6 +23,12 @@ module.exports = {
         loaders: [ 'babel' ],
         exclude: /node_modules/,
         include: __dirname
+      },
+      {
+        test: /\.json$/,
+        loaders: [ 'json-loader' ],
+        exclude: /node_modules/,
+        include: __dirname
       }
     ]
   }

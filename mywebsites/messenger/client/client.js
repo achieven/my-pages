@@ -1,5 +1,5 @@
 import React from 'react'
-import io from '../../../node_modules/socket.io-client/socket.io.js'
+import io from '../../../node_modules/socket.io-client/socket.io'
 var socket = io('/messengerReact')
 const $ = require('../../.././node_modules/jquery/dist/jquery.min.js')
 var clientComponent, loginComponent, chatComponent
@@ -41,6 +41,7 @@ var LoginPage = React.createClass({
                             <input type="text" className="col-xs-9 form-control passwordSignup"/>
                         </div>
                         <h4 className="row col-xs-12"></h4>
+                        <h5 className="signupError hide row col-xs-12">Username is already taken</h5>
                         <button className="btn btn-success row col-xs-12" type='submit'>Sign Up</button>
                     </form>
                 </div>
@@ -68,12 +69,12 @@ var MessageLine = React.createClass({
     render: function () {
         var classname = "form-control alert " + this.props.color
         return (
-            <div>
-                <span className={classname} style={{display:'inline',  left:0}}>
+            <tr>
+                <td className={classname} style={{display:'inline',  left:0}}>
                     {this.props.sender}: {this.props.message}
-                </span>
-                <p style={{paddingBottom: '15px'}}></p>
-            </div>
+                    <h4 className="row col-xs-12"></h4>
+                </td>
+            </tr>
         )
     }
 })
@@ -87,6 +88,7 @@ var ChatPage = React.createClass({
             'alert-warning'
         ]
     },
+    messageKey: 0,
     getInitialState: function () {
         return {
             username: this.props.username || '',
@@ -107,6 +109,8 @@ var ChatPage = React.createClass({
     },
     listenToUserMessages: function () {
         var thisComponent = this
+        socket.removeAllListeners('serverMessageToOther')
+        socket.removeAllListeners('serverMessageToMe')
         socket.on('serverMessageToOther', function (data) {
             thisComponent.handleIncomingMessage(data.message, data.sender, data.socketId)
         })
@@ -131,7 +135,7 @@ var ChatPage = React.createClass({
             var color = data.sender === window.sessionStorage.getItem('chatUserName') ? chatComponent.colors.me : chatComponent.colors.others[(data.socketId) % (chatComponent.colors.others.length)]
             var sender = data.sender === window.sessionStorage.getItem('chatUserName') ? 'You' : data.sender
             messagesDomElements.push(
-                <MessageLine message={data.message} sender={sender} color={color}></MessageLine>
+                <MessageLine key={chatComponent.messageKey++} message={data.message} sender={sender} color={color}></MessageLine>
             )
         })
         return messagesDomElements
@@ -174,6 +178,7 @@ var Client = React.createClass({
             <div className="container">
                 <script src="../../.././node_modules/bootstrap/dist/js/bootstrap.min.js"></script>
                 <link rel="stylesheet" href="../../.././node_modules/bootstrap/dist/css/bootstrap.min.css"/>
+                <script src="../../../node_modules/socket.io-client/socket.io.js"></script>
                 <LoginPage></LoginPage>
                 <ChatPage></ChatPage>
             </div>
@@ -216,6 +221,8 @@ var Client = React.createClass({
             }
             e.preventDefault()
             socket.emit('login', data)
+            socket.removeAllListeners('loginSuccess')
+            socket.removeAllListeners('loginFail')
             socket.on('loginSuccess', function (username) {
                 clientComponent.navigateToChatPage(username);
             })
@@ -230,8 +237,12 @@ var Client = React.createClass({
                 password: $('.passwordSignup').val()
             }
             socket.emit('signup', data)
+            socket.removeAllListeners('signupSuccess')
             socket.on('signupSuccess', function (username) {
                 clientComponent.navigateToChatPage(username);
+            })
+            socket.on('signupFail', function (username) {
+                $('.signupError').removeClass('hide')
             })
         })
 
