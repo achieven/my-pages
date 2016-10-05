@@ -7,15 +7,16 @@ const bodyParser = require('body-parser')
 const socketio = require('socket.io')
 const http = require('http')
 const server = http.Server(app);
-const io = socketio(server);
+// const io = socketio(server);
 const userAgentParser = require('user-agent-parser')
 const util = require('./util/util')
 const winston = require('winston')
 var serverLogger = new (winston.Logger)({
     transports: [
-        new (winston.transports.File)({ filename: 'server.log' })
+        new (winston.transports.File)({filename: 'server.log'})
     ]
 });
+const requirejs = require('requirejs')
 
 
 app.use(express.static(__dirname + '/'));
@@ -45,21 +46,21 @@ const port = process.env.PORT || 5000
 server.listen(port, function () {
     console.log('listening on port', port)
 });
+const io = socketio(server);
 
 app.get('/emitter', function (req, res) {
-    const requirejs = require('requirejs')
+
 
     requirejs([
         'react',
         'react-dom/server',
         'browserify',
         'node-jsx',
-        'mywebsites/emitter/server/serverUtil.js',
     ], function (React,
                  ReactDOMServer,
                  browserify,
-                 jsx,
-                 util) {
+                 jsx
+    ) {
 
         jsx.install();
         app.use('/bundle.js', function (req, res) {
@@ -81,6 +82,11 @@ app.get('/emitter', function (req, res) {
                 })
             )
         ));
+    })
+})
+
+function emitterHelper() {
+    var util = require('./mywebsites/emitter/server/serverUtil.js')
         io.of('/emitterPage').on('connection', function (socket) {
             socket.on('/startEmitter', function (data) {
                 if (socket.emitJsonIntervalId) {
@@ -95,9 +101,8 @@ app.get('/emitter', function (req, res) {
                 clearInterval(socket.emitJsonIntervalId);
             })
         });
-    })
-
-})
+}
+emitterHelper()
 
 app.get('/backend', function (req, res) {
 
@@ -277,41 +282,90 @@ app.get('/simplerestapi', function (req, res) {
 })
 
 app.get('/messengerReact', function (req, res) {
-    var webpack = require('webpack')
-    var webpackDevMiddleware = require('webpack-dev-middleware')
-    //var webpackHotMiddleware = require('webpack-hot-middleware')
-    var config = require('./mywebsites/messenger/webpack.config')
-
-    var compiler = webpack(config)
-    app.use(webpackDevMiddleware(compiler, {noInfo: true, publicPath: config.output.publicPath}))
-    //app.use(webpackHotMiddleware(compiler))
     var html = Handlebars.compile(fs.readFileSync('./mywebsites/messenger/index.html', 'utf8'))()
     res.status(200).send(html)
-    let allClientSocekts = []
-    let socketId = 0
-    io.of('/messengerReact').on('connection', function (socket) {
-        socketId++
-        if (!socket.socketId) {
-            socket.socketId = socketId
-            allClientSocekts.push(socket)
-        }
-        socket.on('clientMessage', function (data) {
-            allClientSocekts.forEach(function (_socket) {
-                if (socket.socketId != _socket.socketId) {
-                    _socket.emit('serverMessageToOther', data)
-                }
-                else {
-                    _socket.emit('serverMessageToMe', data)
-                }
-            })
-        })
-        socket.on('disconnect', function () {
-            allClientSocekts = allClientSocekts.filter(function (_socket) {
-                return socket.socketId != _socket.socketId
-            })
-        })
-    })
 })
+
+function messengerHelper() {
+    var redis = require('redis');
+    var redisClient = redis.createClient();
+    redisClient.on('connect', function () {
+        let allClientSockets = []
+        let socketId = 0
+        io.of('/messengerReact').on('connection', function (socket) {
+            socketId++
+            if (!socket.socketId) {
+                socket.socketId = socketId
+                allClientSockets.push(socket)
+            }
+            socket.on('login', function (data) {
+                redisClient.exists(data.username, function (err, reply) {
+                    if (reply === 1) {
+                        redisClient.get(data.username, function (err, password) {
+                            if(data.password === password) {
+                                socket.emit('loginSuccess', data.username)
+                            }
+                            else {
+                                socket.emit('loginFail')
+                            }
+                            
+                        })
+                    }
+                    else {
+                        socket.emit('loginFail')
+                    }
+                })
+            })
+            socket.on('signup', function (data) {
+                redisClient.exists(data.username, function (err, reply) {
+                    if(reply === 1){
+                        socket.emit('signupFail', data.username)
+                    }
+                    else {
+                        redisClient.set(data.username, data.password, function (err, reply) {
+                            socket.emit('signupSuccess', data.username)
+                        })
+                    }
+                })
+            })
+            socket.on('clientMessage', function (data) {
+                data.socketId = socket.socketId
+                allClientSockets.forEach(function (_socket) {
+                    if (socket.socketId != _socket.socketId) {
+                        _socket.emit('serverMessageToOther', data)
+                    }
+                    else {
+                        _socket.emit('serverMessageToMe', data)
+                    }
+                })
+            })
+            socket.on('saveCorrespondence', function(data){
+                var redisCorrespondence = 'correspondence' + data.username
+                redisClient.set(redisCorrespondence, JSON.stringify(data.messages))
+            })
+            socket.on('getCorrespondence', function(username){
+                var redisCorrespondence = 'correspondence' + username
+                redisClient.get(redisCorrespondence, function(err, messages){
+                    messages && socket.emit('showCorrespondence', JSON.parse(messages))
+                })
+            })
+            socket.on('disconnect', function () {
+                allClientSockets = allClientSockets.filter(function (_socket) {
+                    return socket.socketId != _socket.socketId
+                })
+            })
+        })
+        var webpack = require('webpack')
+        var webpackDevMiddleware = require('webpack-dev-middleware')
+        //var webpackHotMiddleware = require('webpack-hot-middleware')
+        var config = require('./mywebsites/messenger/webpack.config')
+
+        var compiler = webpack(config)
+        app.use(webpackDevMiddleware(compiler, {noInfo: true, publicPath: config.output.publicPath}))
+        //app.use(webpackHotMiddleware(compiler))
+    })
+}
+messengerHelper();
 app.get('/userDetails', function (req, res) {
     const parser = new userAgentParser()
     const parsedUserAgent = parser.setUA(req.headers['user-agent']).getResult()
@@ -374,7 +428,7 @@ app.get('/userDetails', function (req, res) {
         }
     });
     res.send(html);
-    
+
     app.get('/userDetails/userdata/browser', function (req, res) {
         var query = 'SELECT browserName FROM userdata'
         db.all(query, function (err, usersdata) {
@@ -432,21 +486,24 @@ app.post('/userDetails/userdata', function (req, res) {
     var ipUserAgent = req.body.ipAddress + osName + osVersion + engineName + engineVersion + browserName + browserVersion
     var ipExistsQuery = 'SELECT ipUserAgent from userdata'
     db.all(ipExistsQuery, function (err, allIpUserAgents) {
-        serverLogger.log('info','ipUserAgent: ' + ipUserAgent + ' allIpUserAgents:' + JSON.stringify(allIpUserAgents))
+        serverLogger.log('info', 'ipUserAgent: ' + ipUserAgent + ' allIpUserAgents:' + JSON.stringify(allIpUserAgents))
         if (allIpUserAgents.map(function (_ipUserAgent) {
                 return _ipUserAgent.ipUserAgent
             }).indexOf(ipUserAgent) < 0) {
             var query = 'INSERT INTO userdata (ipUserAgent, ip, hostname, country, city, loc, org, region, browserName, browserVersion, engineName, engineVersion, osName, osVersion, deviceModel, deviceVendor, deviceType,  cpuArchitecture) VALUES ( ' +
                 JSON.stringify(ipUserAgent) + ', ' + (JSON.stringify(req.body.ipAddress || "")) + ', ' + (JSON.stringify(req.body.hostname || "")) + ', ' + (JSON.stringify(req.body.country || "")) + ', ' + (JSON.stringify(req.body.city || "")) + ', ' + (JSON.stringify(req.body.loc || "")) + ', ' + (JSON.stringify(req.body.org || "")) + ', ' + (JSON.stringify(req.body.region || "")) + ', ' +
                 (JSON.stringify(browserName || "")) + ', ' + (JSON.stringify(browserVersion || "")) + ', ' + (JSON.stringify(engineName || "")) + ', ' + (JSON.stringify(engineVersion || "")) + ', ' + (JSON.stringify(osName || "")) + ', ' + (JSON.stringify(osVersion || "")) + ', ' + (JSON.stringify(deviceModel || "")) + ', ' + (JSON.stringify(deviceVendor || "")) + ', ' + (JSON.stringify(deviceType || "")) + ', ' + (JSON.stringify(cpuArchitecture || "")) + ')'
-            serverLogger.log('info','query: ' + query)
+            serverLogger.log('info', 'query: ' + query)
             db.run(query, function (err, response) {
-                if (err) return res.status(err.code || err.status || 500).send({err: err, response: allIpUserAgents.length})
-                res.status(200).send({err: null, response: allIpUserAgents.length+1})
+                if (err) return res.status(err.code || err.status || 500).send({
+                    err: err,
+                    response: allIpUserAgents.length
+                })
+                res.status(200).send({err: null, response: allIpUserAgents.length + 1})
             })
         }
         else {
-            serverLogger.log('info','nothing was inserted')
+            serverLogger.log('info', 'nothing was inserted')
             return res.status(200).send({err: 'nothing was inserted', response: allIpUserAgents.length})
         }
     })
