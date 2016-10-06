@@ -180,62 +180,6 @@ var ChatPage = React.createClass({
     render: function () {
         var messages = this.buildMessagesToRender()
         return (
-            // <div className="container">
-            //     <div className="chatPage hide">
-            //         <div className="chatTop" style={{position:'fixed'}}>
-            //             <div className="row">
-            //                 <div className="helloUserName col-xs-3">
-            //                     <h4>Hello {this.state.username}!</h4>
-            //                 </div>
-            //                 <div className="col-xs-6 text-center">
-            //                     <button className="btn btn-info saveCorrespondence">Save Chat
-            //                     </button>
-            //                 </div>
-            //                 <div className="col-xs-3">
-            //                     <button className="btn btn-danger deleteCorrespondence" type="button"
-            //                             style={{right: '20px'}}>Delete Chat
-            //                     </button>
-            //                     <div className="deleteCorrespondenceWarning text-center hide"
-            //                          style={{position: 'relative'}}>
-            //                         <div className="row col-xs-12 alert alert-warning" style={{right: '80px'}}>
-            //                             Are you sure?
-            //                         </div>
-            //                         <div className="row col-xs-12">
-            //                             <button className="btn btn-warning yesDeleteCorrespondence" type="button"
-            //                                     style={{position: 'absolute', left: 0}}>Yes
-            //                             </button>
-            //                             <button className="btn btn-info noDontDeleteCorrespondence" type="button"
-            //                                     style={{right: 0}}>No
-            //                             </button>
-            //                         </div>
-            //                     </div>
-            //                 </div>
-            //             </div>
-            //         </div>
-            //         <div className="chatBottom"
-            //              style={{position: 'fixed', bottom: 0}}>
-            //             <div style={{position: 'relative'}}>
-            //                 <div className="row col-xs-12">
-            //                     <form className="messageForm">
-            //                         <table className="table" style={{position: 'absolute', bottom: '50px', overflow: 'scroll'}}>
-            //                             <tbody>
-            //                             {messages || []}
-            //                             </tbody>
-            //                         </table>
-            //                         <div className="form-group">
-            //                             <div className="col-xs-10">
-            //                                 <input className="form-control" type='text' placeholder='message'/>
-            //                             </div>
-            //                             <div className="col-xs-2">
-            //                                 <button className="btn btn-default" type='submit'>Submit</button>
-            //                             </div>
-            //                         </div>
-            //                     </form >
-            //                 </div>
-            //             </div>
-            //         </div>
-            //     </div>
-            // </div>
             <div className="chatPage hide">
                 <div className="chatTop" style={{position: 'fixed', width: '100%', top: 0, height: '55px'}}>
                     <div className="container">
