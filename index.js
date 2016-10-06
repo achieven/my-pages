@@ -289,6 +289,7 @@ app.get('/messengerReact', function (req, res) {
 function messengerHelper() {
     var redis = require('redis');
     var redisClient = redis.createClient();
+    var redisEnv = process.env.NODE_ENV
     redisClient.on('connect', function () {
         let allClientSockets = []
         let socketId = 0
@@ -299,16 +300,17 @@ function messengerHelper() {
                 allClientSockets.push(socket)
             }
             socket.on('login', function (data) {
-                redisClient.exists(data.username, function (err, reply) {
+                var queryUsername = redisEnv + 'username' +data.username
+                var queryPassword = redisEnv + 'password' +data.password
+                    redisClient.exists(queryUsername, function (err, reply) {
                     if (reply === 1) {
-                        redisClient.get(data.username, function (err, password) {
-                            if(data.password === password) {
+                        redisClient.get(queryUsername, function (err, password) {
+                            if(queryPassword === password) {
                                 socket.emit('loginSuccess', data.username)
                             }
                             else {
                                 socket.emit('loginFail')
                             }
-                            
                         })
                     }
                     else {
@@ -317,12 +319,14 @@ function messengerHelper() {
                 })
             })
             socket.on('signup', function (data) {
-                redisClient.exists(data.username, function (err, reply) {
+                var queryUsername = redisEnv + 'username' +data.username
+                var queryPassword = redisEnv + 'password' +data.password
+                redisClient.exists(queryUsername, function (err, reply) {
                     if(reply === 1){
                         socket.emit('signupFail', data.username)
                     }
                     else {
-                        redisClient.set(data.username, data.password, function (err, reply) {
+                        redisClient.set(queryUsername, queryPassword, function (err, reply) {
                             socket.emit('signupSuccess', data.username)
                         })
                     }
@@ -340,17 +344,18 @@ function messengerHelper() {
                 })
             })
             socket.on('saveCorrespondence', function(data){
-                var redisCorrespondence = 'correspondence' + data.username
+                var queryUsername = redisEnv + 'username' +data.username
+                var redisCorrespondence = redisEnv + 'correspondence' + data.username
                 redisClient.set(redisCorrespondence, JSON.stringify(data.messages))
             })
             socket.on('getCorrespondence', function(username){
-                var redisCorrespondence = 'correspondence' + username
+                var redisCorrespondence = redisEnv + 'correspondence' + username
                 redisClient.get(redisCorrespondence, function(err, messages){
                     messages && socket.emit('showCorrespondence', JSON.parse(messages))
                 })
             })
             socket.on('deleteCorrespondence', function(username){
-                var redisCorrespondence = 'correspondence' + username
+                var redisCorrespondence = redisEnv + 'correspondence' + username
                 redisClient.del(redisCorrespondence, function(err, reply){
                     if(reply === 1){
                         socket.emit('correspondenceDeleted')
