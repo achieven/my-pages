@@ -13,37 +13,40 @@ function escapeUnescapeHtml(text) {
 var LoginPage = React.createClass({
     render: function () {
         return (
-            <div className="row">
-                <div className="col-xs-3">
-                    <form className="loginForm">
-                        <div className="row">
-                            <label className="col-xs-6">Username</label>
-                            <input type="text" className="col-xs-6 form-control usernameLogin"/>
-                        </div>
-                        <div className="row">
-                            <label className="col-xs-6">Password</label>
-                            <input type="text" className="col-xs-6 form-control passwordLogin"/>
-                        </div>
-                        <h4 className="row col-xs-12"></h4>
-                        <h5 className="loginError hide row col-xs-12">No such username and password</h5>
-                        <button className="btn btn-success row col-xs-12" type='submit'>Login</button>
-                    </form>
-                </div>
-                <div className="col-xs-3"></div>
-                <div className="col-xs-3">
-                    <form className="signupForm">
-                        <div className="row">
-                            <label className="col-xs-3">Username</label>
-                            <input type="text" className="col-xs-9 form-control usernameSignup"/>
-                        </div>
-                        <div className="row">
-                            <label className="col-xs-3">Password</label>
-                            <input type="text" className="col-xs-9 form-control passwordSignup"/>
-                        </div>
-                        <h4 className="row col-xs-12"></h4>
-                        <h5 className="signupError hide row col-xs-12">Username is already taken</h5>
-                        <button className="btn btn-success row col-xs-12" type='submit'>Sign Up</button>
-                    </form>
+            <div className="container">
+                <h4 className="row col-xs-12"></h4>
+                <div className="row">
+                    <div className="col-xs-3">
+                        <form className="loginForm">
+                            <div className="row">
+                                <label>Username</label>
+                                <input type="text" className="col-xs-6 form-control usernameLogin"/>
+                            </div>
+                            <div className="row">
+                                <label>Password</label>
+                                <input type="password" className="col-xs-6 form-control passwordLogin"/>
+                            </div>
+                            <h4 className="row col-xs-12"></h4>
+                            <h5 className="loginError hide row col-xs-12">No such username and password</h5>
+                            <button className="btn btn-success row col-xs-12" type='submit'>Login</button>
+                        </form>
+                    </div>
+                    <div className="col-xs-3"></div>
+                    <div className="col-xs-3">
+                        <form className="signupForm">
+                            <div className="row">
+                                <label>Username</label>
+                                <input type="text" className="col-xs-9 form-control usernameSignup"/>
+                            </div>
+                            <div className="row">
+                                <label>Password</label>
+                                <input type="password" className="col-xs-9 form-control passwordSignup"/>
+                            </div>
+                            <h4 className="row col-xs-12"></h4>
+                            <h5 className="signupError hide row col-xs-12">Username is already taken</h5>
+                            <button className="btn btn-success row col-xs-12" type='submit'>Sign Up</button>
+                        </form>
+                    </div>
                 </div>
             </div>
         )
@@ -67,12 +70,13 @@ var MessageLine = React.createClass({
     },
 
     render: function () {
-        var classname = "form-control alert " + this.props.color
+        var classname = "alert " + this.props.color
+        var messageText = this.props.sender + ': ' + this.props.message
         return (
             <tr>
-                <td className={classname} style={{display:'inline',  left:0}}>
-                    {this.props.sender}: {this.props.message}
-                    <h4 className="row col-xs-12"></h4>
+                <td className={classname}>
+                    <p style={{fontWeight: 'bold'}}>{this.props.sender}</p>
+                    <h6 style={{display:'inline', wordWrap: 'break-word'}}>{this.props.message}</h6>
                 </td>
             </tr>
         )
@@ -102,11 +106,12 @@ var ChatPage = React.createClass({
                 messages: messages
             })
         })
-        $('.chatBottom').removeClass('hide')
+        $('.chatPage').removeClass('hide')
         this.listenToUserMessages()
         $('.messageForm').on('submit', function (e) {
             e.preventDefault()
-            socket.emit('clientMessage', {message: $('.messageForm :input').val(), sender: username})
+            var message = $('.messageForm :input').val()
+            message && socket.emit('clientMessage', {message: message, sender: username})
         })
         $('.saveCorrespondence').on('click', function (e) {
             e.preventDefault()
@@ -164,7 +169,7 @@ var ChatPage = React.createClass({
         var messagesDomElements = []
         this.state.messages.forEach(function (data) {
             var color = data.sender === window.sessionStorage.getItem('chatUserName') ? chatComponent.colors.me : chatComponent.colors.others[(data.socketId) % (chatComponent.colors.others.length)]
-            var sender = data.sender === window.sessionStorage.getItem('chatUserName') ? 'You' : data.sender
+            var sender = data.sender === window.sessionStorage.getItem('chatUserName') ? '' : data.sender
             messagesDomElements.push(
                 <MessageLine key={chatComponent.messageKey++} message={data.message} sender={sender}
                              color={color}></MessageLine>
@@ -175,51 +180,135 @@ var ChatPage = React.createClass({
     render: function () {
         var messages = this.buildMessagesToRender()
         return (
-            <div className="container">
-                <h4 className="row col-xs-12"></h4>
-                <div className="chatBottom hide" style={{position: 'fixed',bottom: 0, width: '100%'}}>
-                    <form className="messageForm row">
-                        <table className="table" style={{position: 'absolute', bottom: '223px'}}>
-                            <tbody>
-                            {messages || []}
-                            </tbody>
-                        </table>
-                        <div className="form-group">
-                            <div className="col-xs-10">
-                                <input className="form-control" type='text' placeholder='message'/>
+            // <div className="container">
+            //     <div className="chatPage hide">
+            //         <div className="chatTop" style={{position:'fixed'}}>
+            //             <div className="row">
+            //                 <div className="helloUserName col-xs-3">
+            //                     <h4>Hello {this.state.username}!</h4>
+            //                 </div>
+            //                 <div className="col-xs-6 text-center">
+            //                     <button className="btn btn-info saveCorrespondence">Save Chat
+            //                     </button>
+            //                 </div>
+            //                 <div className="col-xs-3">
+            //                     <button className="btn btn-danger deleteCorrespondence" type="button"
+            //                             style={{right: '20px'}}>Delete Chat
+            //                     </button>
+            //                     <div className="deleteCorrespondenceWarning text-center hide"
+            //                          style={{position: 'relative'}}>
+            //                         <div className="row col-xs-12 alert alert-warning" style={{right: '80px'}}>
+            //                             Are you sure?
+            //                         </div>
+            //                         <div className="row col-xs-12">
+            //                             <button className="btn btn-warning yesDeleteCorrespondence" type="button"
+            //                                     style={{position: 'absolute', left: 0}}>Yes
+            //                             </button>
+            //                             <button className="btn btn-info noDontDeleteCorrespondence" type="button"
+            //                                     style={{right: 0}}>No
+            //                             </button>
+            //                         </div>
+            //                     </div>
+            //                 </div>
+            //             </div>
+            //         </div>
+            //         <div className="chatBottom"
+            //              style={{position: 'fixed', bottom: 0}}>
+            //             <div style={{position: 'relative'}}>
+            //                 <div className="row col-xs-12">
+            //                     <form className="messageForm">
+            //                         <table className="table" style={{position: 'absolute', bottom: '50px', overflow: 'scroll'}}>
+            //                             <tbody>
+            //                             {messages || []}
+            //                             </tbody>
+            //                         </table>
+            //                         <div className="form-group">
+            //                             <div className="col-xs-10">
+            //                                 <input className="form-control" type='text' placeholder='message'/>
+            //                             </div>
+            //                             <div className="col-xs-2">
+            //                                 <button className="btn btn-default" type='submit'>Submit</button>
+            //                             </div>
+            //                         </div>
+            //                     </form >
+            //                 </div>
+            //             </div>
+            //         </div>
+            //     </div>
+            // </div>
+            <div className="chatPage hide">
+                <div className="chatTop" style={{position: 'fixed', width: '100%', top: 0, height: '55px'}}>
+                    <div className="container">
+                        <div className="row">
+                            <div className="col-sm-8 col-xs-4">
+                                <h5>Hello {this.state.username}!</h5>
                             </div>
-                            <div className="col-xs-2">
-                                <button className="btn btn-default" type='submit'>Submit</button>
+                            <div className="col-sm-4 col-xs-8">
+                                <div className="row">
+                                    <div className="col-xs-6">
+                                        <button className="btn btn-info row col-xs-12 saveCorrespondence">Save Chat
+                                        </button>
+                                    </div>
+                                    <div className="col-xs-6">
+                                        <button className="btn btn-danger row col-xs-12 deleteCorrespondence">Delete
+                                            Chat
+                                        </button>
+                                        <div className="deleteCorrespondenceWarning text-center hide"
+                                             style={{position: 'relative', zIndex: 1}}>
+                                            <h4 className="row col-xs-12"></h4>
+                                            <div className="row col-xs-12 alert alert-warning">
+                                                Are you sure you want to delete this chat? This is an irreversible step!
+                                            </div>
+                                            <div className="row col-xs-12">
+                                                <button className="btn btn-warning yesDeleteCorrespondence"
+                                                        type="button"
+                                                        style={{position: 'absolute', left: 0}}>Yes
+                                                </button>
+                                                <button className="btn btn-info noDontDeleteCorrespondence"
+                                                        type="button"
+                                                        style={{position: 'absolute',right: 0}}>No
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                        <div className="row col-xs-12 serverMessage"></div>
-                    </form >
-                    <h4 className="row col-xs-12"></h4>
-                    <div className="row">
-                        <div className="helloUserName col-xs-3">
-                            <h4>Hello {this.state.username}!</h4>
+                    </div>
+                    <div className="chatBody">
+                        <div className="container">
+                            <div className="row col-sm-9 col-xs-8"
+                                 style={{overflow: 'scroll', position: 'fixed', top: '55px', bottom: '55px'}}>
+                                <table className="table">
+                                    <tbody>
+                                    {messages || []}
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
-                        <div className="col-xs-6">
-                            <button className="btn btn-info text-center saveCorrespondence" style={{textAlign: 'center'}}>Save Chat</button>
-                        </div>
-                        <div className="col-xs-3">
-                            <button className="btn btn-danger deleteCorrespondence" type="button" style={{position: 'fixed', right: '20px'}}>Delete Chat
-                            </button>
-                            <div className="deleteCorrespondenceWarning hide">
-                                <div className="row col-xs-12 alert alert-warning">Are you sure you want to delete the
-                                    correspondence? This is irreversible
-                                </div>
-                                <div className="row col-xs-12">
-                                    <button className="btn btn-warning yesDeleteCorrespondence" type="button">Yes
-                                    </button>
-                                    <button className="btn btn-info noDontDeleteCorrespondence" type="button" style={{position: 'fixed', right: 0}}>No</button>
-                                </div>
+
+                    </div>
+                    <div className="chatBottom" style={{position: 'fixed', width: '100%', bottom: 0, height: '55px'}}>
+                        <div className="container">
+                            <div className="row">
+                                <form className="messageForm">
+                                    <div className="col-xs-9">
+                                        <div className="form-group">
+                                            <input className="form-control" type='text' placeholder='message'/>
+                                        </div>
+                                    </div>
+                                    <div className="col-xs-3 text-right">
+                                        <button className="btn btn-success row col-xs-12" type='submit'>Submit</button>
+                                    </div>
+                                </form>
+                                
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
         )
+
     },
     componentDidMount: function () {
         chatComponent = this
@@ -229,7 +318,7 @@ var ChatPage = React.createClass({
 var Client = React.createClass({
     render: function () {
         return (
-            <div className="container">
+            <div>
                 <script src="../../.././node_modules/bootstrap/dist/js/bootstrap.min.js"></script>
                 <link rel="stylesheet" href="../../.././node_modules/bootstrap/dist/css/bootstrap.min.css"/>
                 <script src="../../../node_modules/socket.io-client/socket.io.js"></script>
