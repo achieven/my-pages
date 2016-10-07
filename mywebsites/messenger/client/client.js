@@ -40,10 +40,14 @@ var LoginPage = React.createClass({
                             </div>
                             <div className="row">
                                 <label>Password</label>
-                                <input type="password" className="col-xs-9 form-control passwordSignup"/>
+                                <input type="password" className="col-xs-9 form-control passwordSignup1"/>
+                            </div>
+                            <div className="row">
+                                <label>Re-enter Password</label>
+                                <input type="password" className="col-xs-9 form-control passwordSignup2"/>
                             </div>
                             <h4 className="row col-xs-12"></h4>
-                            <h5 className="signupError hide row col-xs-12">Username is already taken</h5>
+                            <h5 className="signupError row col-xs-12"></h5>
                             <button className="btn btn-success row col-xs-12" type='submit'>Sign Up</button>
                         </form>
                     </div>
@@ -319,18 +323,25 @@ var Client = React.createClass({
         })
         $('.signupForm').on('submit', function (e) {
             e.preventDefault()
-            var data = {
-                username: $('.usernameSignup').val(),
-                password: $('.passwordSignup').val()
-            }
-            socket.emit('signup', data)
-            socket.removeAllListeners('signupSuccess')
-            socket.on('signupSuccess', function (username) {
-                clientComponent.navigateToChatPage(username);
-            })
-            socket.on('signupFail', function (username) {
+            if($('.passwordSignup1').val() != $('.passwordSignup2').val()){
                 $('.signupError').removeClass('hide')
-            })
+                $('.signupError').text('Passwords dont match')
+            }
+            else {
+                var data = {
+                    username: $('.usernameSignup').val(),
+                    password: $('.passwordSignup1').val()
+                }
+                socket.emit('signup', data)
+                socket.removeAllListeners('signupSuccess')
+                socket.on('signupSuccess', function (username) {
+                    clientComponent.navigateToChatPage(username);
+                })
+                socket.on('signupFail', function (username) {
+                    $('.signupError').removeClass('hide')
+                    $('.signupError').text('Username ' + username + ' is not available')
+                })
+            }
         })
 
     }

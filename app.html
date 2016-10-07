@@ -16,15 +16,24 @@
         <h4 class="row col-xs-12"></h4>
         <div class="row" style="background-color: red;   border-radius: 6px">
             <div class="col-sm-5 col-xs-8">
+                <table class="table">
+                    <tr>
+                        <th>Project Name</th>
+                        <th>Some tools that are being used</th>
+                    </tr>
+
+
                 {{#each projects}}
-                <div class="row col-xs-9" style="margin-bottom: 15px">
-                    <a class="btn btn-info" target="_blank" href={{link}}>{{name}}</a>
-                </div>
+                <tr>
+                    <td><a class="btn btn-info" target="_blank" href={{link}}>{{name}}</a></td>
+                    <td>{{tools}}</td>
+                </tr>
                 {{/each}}
+                </table>
             </div>
 
             <div class="col-sm-7 col-xs-4">
-                <img src="http://www.graphics99.com/wp-content/uploads/2012/06/icushion-3gs-pillow-design-cool-funky-cushion-medium.jpg"
+                <img src="./assets/images/iphone_landing_pages_img.jpg"
                      alt="Cool IPhone Picture" class="img-thumbnail"/>
             </div>
             <h4 class="row col-xs-12"></h4>

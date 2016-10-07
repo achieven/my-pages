@@ -24,14 +24,12 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended: true}));
 
 app.get('/', function (req, res, next) {
-
     var projects = [
-        {name: 'Emitter', link: '/emitter'},
-        {name: 'Digital Wallet', link: '/backend'},
-        {name: 'Simple Rest Api', link: '/simplerestapi'},
-        {name: 'React Messenger (still in construction)', link: '/messengerReact'},
-        {name: 'User Details (responsive)', link: '/userDetails'}
-
+        {name: 'Messenger', link: '/messengerReact', tools: 'react, redis, socket.io'},
+        {name: 'User Details', link: '/userDetails', tools: 'sqlite, userAgent, ipinfo'},
+        {name: 'Simple Rest Api', link: '/simplerestapi', tools: 'sqlite'},
+        {name: 'Emitter', link: '/emitter', tools: 'react, socket.io'},
+        {name: 'Digital Wallet', link: '/backend', tools: 'colu sdk'}
     ]
     var mainProjectGithubLink = 'https://github.com/achieven/my-pages'
     var html = Handlebars.compile(fs.readFileSync('./app.html', 'utf8'))({
