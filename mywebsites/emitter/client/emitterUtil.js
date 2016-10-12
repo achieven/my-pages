@@ -1,4 +1,3 @@
-define([], function(){
     'use strict'
     let Util = {
         ticker: {
@@ -30,6 +29,5 @@ define([], function(){
             }
         }
     };
-    return Util;
-})
+ module.exports = Util
 

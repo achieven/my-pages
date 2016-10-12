@@ -5,7 +5,7 @@
     <link rel="stylesheet" href="./node_modules/bootstrap/dist/css/bootstrap.min.css"/>
     <script src="./node_modules/ladda/dist/spin.min.js  "></script>
     <script src="./node_modules/ladda/dist/ladda.min.js"></script>
-    <link rel="stylesheet" href="./node_modules/ladda/dist/ladda.min.css">
+    <link rel="stylesheet" href="./node_modules/ladda/dist/ladda.min.css"/>
 
 </head>
 <body>
@@ -201,7 +201,7 @@
 
                 $('.sendAssetErrorHeader').addClass('hide')
                 $('.sendAssetHeader').removeClass('hide')
-                $('.sendAssetResponse').text(data)
+                $('.sendAssetResponse').html('<li>' + data + '</li>')
             },
             error: function (err) {
                 laddaSendAsset.stop()
