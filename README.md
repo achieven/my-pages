@@ -5,20 +5,19 @@ Contact me in achievendar@gmail.com if you want to specifically see it live.
 
 To use this code:
 
-To run the website  
-git clone https://github.com/achieven/my-pages.git
-cd my-pages
-npm i
-nodemon
-open browser at http://localhost:5000
+To run the website: 
+git clone https://github.com/achieven/my-pages.git  
+cd my-pages  
+npm i  
+nodemon  
+open browser at http://localhost:5000  
 
-To run tests
+To run tests:  
+Unit tests:  
+mocha test/unitTests/  
 
-Unit tests:
-mocha test/unitTests/
-
-Browser tests:
-node test/browserTests/browserTests.js
+Browser tests:  
+node test/browserTests/browserTests.js  
 
 
 
