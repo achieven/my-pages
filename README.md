@@ -5,7 +5,7 @@ Contact me in achievendar@gmail.com if you want to specifically see it live.
 
 To use this code:
 
-To run the website: 
+To run the website:  
 git clone https://github.com/achieven/my-pages.git  
 cd my-pages  
 npm i  
