@@ -17,6 +17,7 @@ Unit tests:
 mocha test/unitTests/  
 
 Browser tests:  
+nodemon  
 node test/browserTests/browserTests.js  
 
 
