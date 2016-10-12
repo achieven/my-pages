@@ -1,6 +1,6 @@
 'use strict';
 const React = require('react');
-let emitterUtil;
+let emitterUtil = require('./emitterUtil')
 let tickerComponent, chartComponent;
 let emitFrequency, throttleBufferSize;
 const maxRendersPerSecond = 2;
@@ -148,11 +148,6 @@ let Emitter = React.createClass({
         };
     },
     componentDidMount: function () {
-        if (!emitterUtil) {
-            requirejs(['../.././mywebsites/emitter/client/emitterUtil'], function (util) {
-                emitterUtil = util;
-            });
-        }
         let socket = io.connect('/emitterPage');
         $('#emitFrequencyForm').submit(function (event) {
             event.preventDefault();

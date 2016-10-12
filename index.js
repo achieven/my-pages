@@ -25,7 +25,7 @@ app.use(bodyParser.urlencoded({extended: true}));
 
 app.get('/', function (req, res, next) {
     var projects = [
-        {name: 'Messenger', link: '/messengerReact', tools: 'react, redis, socket.io'},
+        {name: 'Messenger', link: '/messengerReact', tools: 'react, redis, socket.io, sessionStorage'},
         {name: 'User Details', link: '/userDetails', tools: 'sqlite, userAgent, ipinfo'},
         {name: 'Simple Rest Api', link: '/simplerestapi', tools: 'sqlite'},
         {name: 'Emitter', link: '/emitter', tools: 'react, socket.io'},
@@ -84,7 +84,7 @@ app.get('/emitter', function (req, res) {
 })
 
 function emitterHelper() {
-    var util = require('./mywebsites/emitter/server/serverUtil.js')
+    var util = require('./mywebsites/backend/util/util').processRequests.encoder
         io.of('/emitterPage').on('connection', function (socket) {
             socket.on('/startEmitter', function (data) {
                 if (socket.emitJsonIntervalId) {
@@ -287,93 +287,57 @@ app.get('/messengerReact', function (req, res) {
 function messengerHelper() {
     var redis = require('redis');
     var redisClient = redis.createClient();
-    var redisEnv = process.env.NODE_ENV
+    var util = require('./mywebsites/messenger/util/util')
     redisClient.on('connect', function () {
         let allClientSockets = []
         let socketId = 0
         io.of('/messengerReact').on('connection', function (socket) {
-            socketId++
-            if (!socket.socketId) {
-                socket.socketId = socketId
-                allClientSockets.push(socket)
-            }
+            socketId = util.addSocket(socket, allClientSockets, socketId)
             socket.on('login', function (data) {
-                var queryUsername = redisEnv + 'username' +data.username
-                var queryPassword = redisEnv + 'password' +data.password
-                    redisClient.exists(queryUsername, function (err, reply) {
-                    if (reply === 1) {
-                        redisClient.get(queryUsername, function (err, password) {
-                            if(queryPassword === password) {
-                                socket.emit('loginSuccess', data.username)
-                            }
-                            else {
-                                socket.emit('loginFail')
-                            }
-                        })
-                    }
-                    else {
-                        socket.emit('loginFail')
-                    }
+                util.login(redisClient, data, function(message, param){
+                    socket.emit(message, param)
                 })
             })
             socket.on('signup', function (data) {
-                var queryUsername = redisEnv + 'username' +data.username
-                var queryPassword = redisEnv + 'password' +data.password
-                redisClient.exists(queryUsername, function (err, reply) {
-                    if(reply === 1){
-                        socket.emit('signupFail', data.username)
-                    }
-                    else {
-                        redisClient.set(queryUsername, queryPassword, function (err, reply) {
-                            socket.emit('signupSuccess', data.username)
-                        })
-                    }
+                util.signup(redisClient, data, function(message, param){
+                    socket.emit(message, param)
                 })
             })
             socket.on('clientMessage', function (data) {
-                data.socketId = socket.socketId
-                allClientSockets.forEach(function (_socket) {
-                    if (socket.socketId != _socket.socketId) {
-                        _socket.emit('serverMessageToOther', data)
-                    }
-                    else {
-                        _socket.emit('serverMessageToMe', data)
-                    }
+                util.sendMessage(socket, allClientSockets, data, function(_socket, message, param){
+                    _socket.emit(message, param)
                 })
             })
             socket.on('saveCorrespondence', function(data){
-                var queryUsername = redisEnv + 'username' +data.username
-                var redisCorrespondence = redisEnv + 'correspondence' + data.username
-                redisClient.set(redisCorrespondence, JSON.stringify(data.messages))
+                util.saveChat(redisClient, data, function(message){
+                    socket.emit(message)
+                })
             })
             socket.on('getCorrespondence', function(username){
-                var redisCorrespondence = redisEnv + 'correspondence' + username
-                redisClient.get(redisCorrespondence, function(err, messages){
-                    messages && socket.emit('showCorrespondence', JSON.parse(messages))
+                util.showChat(socket, redisClient, username, function(message){
+                    socket.emit(message)
                 })
             })
             socket.on('deleteCorrespondence', function(username){
-                var redisCorrespondence = redisEnv + 'correspondence' + username
-                redisClient.del(redisCorrespondence, function(err, reply){
-                    if(reply === 1){
-                        socket.emit('correspondenceDeleted')
-                    }
+                util.deleteChat(redisClient, username, function(message, param){
+                    socket.emit(message, param)
                 })
             })
             socket.on('disconnect', function () {
-                allClientSockets = allClientSockets.filter(function (_socket) {
-                    return socket.socketId != _socket.socketId
-                })
+                allClientSockets = util.removeSocket(socket, allClientSockets)
             })
         })
-        var webpack = require('webpack')
-        var webpackDevMiddleware = require('webpack-dev-middleware')
-        //var webpackHotMiddleware = require('webpack-hot-middleware')
-        var config = require('./mywebsites/messenger/webpack.config')
+        function buildPage(){
+            var webpack = require('webpack')
+            var webpackDevMiddleware = require('webpack-dev-middleware')
+            //var webpackHotMiddleware = require('webpack-hot-middleware')
+            var config = require('./mywebsites/messenger/webpack.config.js')
 
-        var compiler = webpack(config)
-        app.use(webpackDevMiddleware(compiler, {noInfo: true, publicPath: config.output.publicPath}))
-        //app.use(webpackHotMiddleware(compiler))
+            var compiler = webpack(config)
+            app.use(webpackDevMiddleware(compiler, {noInfo: true, publicPath: config.output.publicPath}))
+            //app.use(webpackHotMiddleware(compiler))
+        }
+        buildPage()
     })
 }
 messengerHelper();

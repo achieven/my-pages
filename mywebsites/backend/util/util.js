@@ -347,6 +347,16 @@ var processRequests = {
             }
             return sendResponse({code: errorCodeAndResponse.errorCode, response: errorCodeAndResponse.errorResponse})
         },
+        generateJson: function () {
+            const ceilingNumber = 9999999999;
+            var random = Math.floor(Math.random() * (ceilingNumber+1));
+            var jsonObjectToEmit = {
+                timestamp: Date.now(),
+                number: random,
+                encodedNumber: this.encodeNumber(random)
+            };
+            return jsonObjectToEmit;
+        }
     }
 }
 module.exports.processRequests = processRequests

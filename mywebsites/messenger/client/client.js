@@ -3,6 +3,7 @@ import io from '../../../node_modules/socket.io-client/socket.io'
 var socket = io('/messengerReact')
 const $ = require('../../.././node_modules/jquery/dist/jquery.min.js')
 var clientComponent, loginComponent, chatComponent
+var Ladda = require('ladda')
 
 function escapeUnescapeHtml(text) {
     text = text.split('<').join('&lt')
@@ -105,6 +106,7 @@ var ChatPage = React.createClass({
     },
     startChat: function (username) {
         socket.emit('getCorrespondence', username)
+        socket.removeAllListeners('showCorrespondence')
         socket.on('showCorrespondence', function (messages) {
             chatComponent.setState({
                 messages: messages
@@ -118,11 +120,24 @@ var ChatPage = React.createClass({
             message && socket.emit('clientMessage', {message: message, sender: username})
         })
         $('.saveCorrespondence').on('click', function (e) {
+            $('.saveCorrespondence .ladda-spinner').removeClass('hide')
+            var laddaSaveChat = Ladda.create( document.querySelector( '.saveCorrespondence' ) )
+            laddaSaveChat.start()
             e.preventDefault()
-            socket.removeAllListeners('saveCorrespondence')
             socket.emit('saveCorrespondence', {
                 username: chatComponent.state.username,
                 messages: chatComponent.state.messages
+            })
+            socket.removeAllListeners('correspondenceSaved')
+            socket.on('correspondenceSaved', function(){
+                laddaSaveChat.stop()
+                $('.saveCorrespondence').removeClass('ladda-button')
+                $('.saveCorrespondence .ladda-spinner').addClass('hide')
+                $('.chatSavedMessage').removeClass('hide')
+                setTimeout(function(){
+                    $('.chatSavedMessage').addClass('hide')
+                }, 2000)
+                
             })
         })
         $('.deleteCorrespondence').on('click', function (e) {
@@ -189,16 +204,20 @@ var ChatPage = React.createClass({
                     <div className="container">
                         <div className="row">
                             <div className="col-sm-8 col-xs-4">
-                                <h5>Hello {this.state.username}!</h5>
+                                <h3>Hello {this.state.username}!</h3>
                             </div>
                             <div className="col-sm-4 col-xs-8">
                                 <div className="row">
                                     <div className="col-xs-6">
-                                        <button className="btn btn-info row col-xs-12 saveCorrespondence">Save Chat
+                                        <button className="btn btn-info col-xs-12 saveCorrespondence" data-style="zoom-in" type='submit'>
+                                            <span className="ladda-label">Save Chat</span>
+                                            <span className="ladda-spinner"></span>
                                         </button>
+                                        <h5 className="chatSavedMessage text-center hide">Chat Saved!</h5>
+                                        <h4></h4>
                                     </div>
                                     <div className="col-xs-6">
-                                        <button className="btn btn-danger row col-xs-12 deleteCorrespondence">Delete
+                                        <button className="btn btn-danger col-xs-12 deleteCorrespondence">Delete
                                             Chat
                                         </button>
                                         <div className="deleteCorrespondenceWarning text-center hide"
@@ -234,7 +253,6 @@ var ChatPage = React.createClass({
                                 </table>
                             </div>
                         </div>
-
                     </div>
                     <div className="chatBottom" style={{position: 'fixed', width: '100%', bottom: 0, height: '55px'}}>
                         <div className="container">
@@ -270,6 +288,9 @@ var Client = React.createClass({
                 <script src="../../.././node_modules/bootstrap/dist/js/bootstrap.min.js"></script>
                 <link rel="stylesheet" href="../../.././node_modules/bootstrap/dist/css/bootstrap.min.css"/>
                 <script src="../../../node_modules/socket.io-client/socket.io.js"></script>
+                <script src="./node_modules/ladda/dist/spin.min.js  "></script>
+                <script src="./node_modules/ladda/dist/ladda.min.js"></script>
+                <link rel="stylesheet" href="./node_modules/ladda/dist/ladda.min.css"/>
                 <LoginPage></LoginPage>
                 <ChatPage></ChatPage>
             </div>
@@ -348,3 +369,5 @@ var Client = React.createClass({
 })
 
 module.exports = Client
+
+
