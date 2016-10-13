@@ -4,18 +4,19 @@
     <link rel="stylesheet" href="./node_modules/bootstrap/dist/css/bootstrap.min.css">
     <script src="./node_modules/bootstrap/dist/js/bootstrap.min.js"></script>
 </head>
-<body>
-<div style="background-color: yellowgreen">
-    <div class="container" style="padding-bottom: 30px">
-        <div class="row">
-            <div class="col-xs-12">
-                <h3>The source code of this page can be found <a class="btn btn-primary" target="_blank"
-                                                                 href={{mainProjectGithubLink}}>here</a></h3>
-            </div>
-        </div>
+<body style="background-image: url(./assets/images/landingPageGreyBackground.png); ">
+<div>
+
+    <div class="container">
+        <h3 class="text-info">The source code of this page can be found <a class="text-warning" target="_blank"
+                                                                           href={{mainProjectGithubLink}}>here</a>
+        </h3>
+    </div>
+    <div class="container">
         <h4 class="row col-xs-12"></h4>
-        <div class="row" style="background-color: red;   border-radius: 6px">
-            <div class="col-sm-7 col-xs-8">
+        <div class="row" style="border-radius: 6px">
+
+            <div class="col-xs-12">
                 <table class="table">
                     <tr>
                         <th>Project Name</th>
@@ -23,45 +24,46 @@
                     </tr>
 
 
-                {{#each projects}}
-                <tr>
-                    <td><a class="btn btn-info" target="_blank" href={{link}}>{{name}}</a></td>
-                    <td>{{tools}}</td>
-                </tr>
-                {{/each}}
+                    {{#each projects}}
+                    <tr>
+                        <td><a class="btn btn-info" target="_blank" href={{link}}>{{name}}</a></td>
+                        <td>{{tools}}</td>
+                    </tr>
+                    {{/each}}
                 </table>
             </div>
-
-            <div class="col-sm-5 col-xs-4">
-                <img src="./assets/images/iphone_landing_pages_img.jpg"
+        </div>
+        <div class="row">
+            <div class="col-xs-12 text-center">
+                <img src="./assets/images/worldMapLandingPage.jpg"
                      alt="Cool IPhone Picture" class="img-thumbnail"/>
             </div>
             <h4 class="row col-xs-12"></h4>
         </div>
-
     </div>
-
-
-    <script>
-        $.get("http://ipinfo.io", function (response) {
-            var data = {
-                ipAddress: response.ip,
-                hostname: response.hostname,
-                country: response.country,
-                city: response.city,
-                loc: response.loc,
-                org: response.org,
-                region: response.region
-            }
-            $.ajax({
-                type: 'post',
-                url: '/userDetails/userdata',
-                data: JSON.stringify(data),
-                contentType: 'application/json'
-            })
-        }, "jsonp")
-
-    </script>
 </div>
+
+
+<script>
+    $.get("http://ipinfo.io", function (response) {
+        var data = {
+            ipAddress: response.ip,
+            hostname: response.hostname,
+            country: response.country,
+            city: response.city,
+            loc: response.loc,
+            org: response.org,
+            region: response.region
+        }
+        $.ajax({
+            type: 'post',
+            url: '/userDetails/userdata',
+            data: JSON.stringify(data),
+            contentType: 'application/json'
+        })
+    }, "jsonp")
+
+</script>
+
 </body>
 </html>

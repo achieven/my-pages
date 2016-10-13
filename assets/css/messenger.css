@@ -1,0 +1,50 @@
+.messageSender {
+    font-weight: bold;
+}
+
+.messageText {
+    display: inline;
+    word-wrap: break-word;
+}
+
+.chatTop {
+    position: fixed;
+    width: 100%;
+    top: 0;
+    height: 70px;
+    padding-top: 10px;
+}
+
+.deleteCorrespondenceWarning {
+    position: relative;
+    zIndex: 1;
+}
+
+.yesDeleteCorrespondence {
+    position: absolute;
+    left: 0;
+}
+
+.noDontDeleteCorrespondence {
+    position: absolute;
+    right: 0;
+}
+
+.chatTable {
+    overflow: scroll;
+    position: fixed;
+    top: 70px;
+    bottom: 60px;
+}
+
+.chatBottom {
+    position: fixed;
+    width: 100%;
+    bottom: 0;
+    height: 60px;
+}
+
+.helloUsername {
+    margin-top: 10px;
+}
+

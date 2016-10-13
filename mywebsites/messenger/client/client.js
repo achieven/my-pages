@@ -80,8 +80,8 @@ var MessageLine = React.createClass({
         return (
             <tr>
                 <td className={classname}>
-                    <p style={{fontWeight: 'bold'}}>{this.props.sender}</p>
-                    <h6 style={{display:'inline', wordWrap: 'break-word'}}>{this.props.message}</h6>
+                    <p className="messageSender">{this.props.sender}</p>
+                    <h6 className="messageText">{this.props.message}</h6>
                 </td>
             </tr>
         )
@@ -118,10 +118,12 @@ var ChatPage = React.createClass({
             e.preventDefault()
             var message = $('.messageForm :input').val()
             message && socket.emit('clientMessage', {message: message, sender: username})
+            $('.messageForm')[0].reset()
+
         })
         $('.saveCorrespondence').on('click', function (e) {
             $('.saveCorrespondence .ladda-spinner').removeClass('hide')
-            var laddaSaveChat = Ladda.create( document.querySelector( '.saveCorrespondence' ) )
+            var laddaSaveChat = Ladda.create(document.querySelector('.saveCorrespondence'))
             laddaSaveChat.start()
             e.preventDefault()
             socket.emit('saveCorrespondence', {
@@ -129,15 +131,14 @@ var ChatPage = React.createClass({
                 messages: chatComponent.state.messages
             })
             socket.removeAllListeners('correspondenceSaved')
-            socket.on('correspondenceSaved', function(){
+            socket.on('correspondenceSaved', function () {
                 laddaSaveChat.stop()
                 $('.saveCorrespondence').removeClass('ladda-button')
                 $('.saveCorrespondence .ladda-spinner').addClass('hide')
                 $('.chatSavedMessage').removeClass('hide')
-                setTimeout(function(){
+                setTimeout(function () {
                     $('.chatSavedMessage').addClass('hide')
                 }, 2000)
-                
             })
         })
         $('.deleteCorrespondence').on('click', function (e) {
@@ -200,40 +201,37 @@ var ChatPage = React.createClass({
         var messages = this.buildMessagesToRender()
         return (
             <div className="chatPage hide">
-                <div className="chatTop" style={{position: 'fixed', width: '100%', top: 0, height: '55px'}}>
+                <div className="chatTop">
                     <div className="container">
                         <div className="row">
                             <div className="col-sm-8 col-xs-4">
-                                <h3>Hello {this.state.username}!</h3>
+                                <h3 className="helloUsername">Hello {this.state.username}!</h3>
                             </div>
                             <div className="col-sm-4 col-xs-8">
                                 <div className="row">
                                     <div className="col-xs-6">
-                                        <button className="btn btn-info col-xs-12 saveCorrespondence" data-style="zoom-in" type='submit'>
+                                        <button className="btn btn-info col-xs-12 saveCorrespondence"
+                                                data-style="zoom-in" type='submit'>
                                             <span className="ladda-label">Save Chat</span>
                                             <span className="ladda-spinner"></span>
                                         </button>
                                         <h5 className="chatSavedMessage text-center hide">Chat Saved!</h5>
-                                        <h4></h4>
                                     </div>
                                     <div className="col-xs-6">
                                         <button className="btn btn-danger col-xs-12 deleteCorrespondence">Delete
                                             Chat
                                         </button>
-                                        <div className="deleteCorrespondenceWarning text-center hide"
-                                             style={{position: 'relative', zIndex: 1}}>
+                                        <div className="deleteCorrespondenceWarning text-center hide">
                                             <h4 className="row col-xs-12"></h4>
                                             <div className="row col-xs-12 alert alert-warning">
                                                 Are you sure you want to delete this chat? This is an irreversible step!
                                             </div>
                                             <div className="row col-xs-12">
                                                 <button className="btn btn-warning yesDeleteCorrespondence"
-                                                        type="button"
-                                                        style={{position: 'absolute', left: 0}}>Yes
+                                                        type="button">Yes
                                                 </button>
                                                 <button className="btn btn-info noDontDeleteCorrespondence"
-                                                        type="button"
-                                                        style={{position: 'absolute',right: 0}}>No
+                                                        type="button">No
                                                 </button>
                                             </div>
                                         </div>
@@ -242,37 +240,36 @@ var ChatPage = React.createClass({
                             </div>
                         </div>
                     </div>
-                    <div className="chatBody">
-                        <div className="container">
-                            <div className="row col-sm-9 col-xs-8"
-                                 style={{overflow: 'scroll', position: 'fixed', top: '55px', bottom: '55px'}}>
-                                <table className="table">
-                                    <tbody>
-                                    {messages || []}
-                                    </tbody>
-                                </table>
-                            </div>
+                </div>
+                <div className="chatBody">
+                    <div className="container">
+                        <div className="row col-sm-9 col-xs-8 chatTable">
+                            <table className="table">
+                                <tbody>
+                                {messages || []}
+                                </tbody>
+                            </table>
                         </div>
                     </div>
-                    <div className="chatBottom" style={{position: 'fixed', width: '100%', bottom: 0, height: '55px'}}>
-                        <div className="container">
-                            <div className="row">
-                                <form className="messageForm">
-                                    <div className="col-xs-9">
-                                        <div className="form-group">
-                                            <input className="form-control" type='text' placeholder='message'/>
-                                        </div>
+                </div>
+                <div className="chatBottom">
+                    <div className="container">
+                        <div className="row">
+                            <form className="messageForm">
+                                <div className="col-xs-9">
+                                    <div className="form-group">
+                                        <input className="form-control" type='text' placeholder='message'/>
                                     </div>
-                                    <div className="col-xs-3 text-right">
-                                        <button className="btn btn-success row col-xs-12" type='submit'>Submit</button>
-                                    </div>
-                                </form>
-                                
-                            </div>
+                                </div>
+                                <div className="col-xs-3 text-right">
+                                    <button className="btn btn-success row col-xs-12" type='submit'>Submit</button>
+                                </div>
+                            </form>
                         </div>
                     </div>
                 </div>
             </div>
+
         )
 
     },
@@ -291,6 +288,7 @@ var Client = React.createClass({
                 <script src="./node_modules/ladda/dist/spin.min.js  "></script>
                 <script src="./node_modules/ladda/dist/ladda.min.js"></script>
                 <link rel="stylesheet" href="./node_modules/ladda/dist/ladda.min.css"/>
+                <link href="../../../assets/css/messenger.css" rel="stylesheet"/>
                 <LoginPage></LoginPage>
                 <ChatPage></ChatPage>
             </div>
@@ -308,6 +306,17 @@ var Client = React.createClass({
         //     clientComponent.navigateToChatPage(window.sessionStorage.getItem('chatUserName'))
         // }
         $('.loadingMessage').addClass('hide')
+        var deviceInputClass, deviceButtonClass
+        if(/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)){
+            deviceInputClass = 'lg'
+            deviceButtonClass = 'lg'
+        }
+        else {
+            deviceInputClass = 'xs'
+            deviceButtonClass = 'md'
+        }
+        $('button').addClass('btn-' + deviceButtonClass)
+        $('input').addClass('input-' + deviceInputClass)
         $.get("http://ipinfo.io", function (response) {
             var data = {
                 ipAddress: response.ip,
@@ -344,7 +353,7 @@ var Client = React.createClass({
         })
         $('.signupForm').on('submit', function (e) {
             e.preventDefault()
-            if($('.passwordSignup1').val() != $('.passwordSignup2').val()){
+            if ($('.passwordSignup1').val() != $('.passwordSignup2').val()) {
                 $('.signupError').removeClass('hide')
                 $('.signupError').text('Passwords dont match')
             }
