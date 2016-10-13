@@ -33,4 +33,4 @@ node test/browserTests/browserTests.js
 
 
 
-The machines are hosted by digital ocean
+The machines are hosted by digital ocean with Ubuntu 16.04.1 x64
