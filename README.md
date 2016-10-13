@@ -8,8 +8,8 @@ git clone https://github.com/achieven/my-pages.git
 
 To run the website:
 
-Automatically:
-./my-pages/script/deploy
+Automatically: (nodemon required)
+./my-pages/script/deployLocally
 
 Manually:
 cd my-pages  
@@ -19,7 +19,7 @@ open browser at http://localhost:5000
 
 To run tests:
 
-Automatically:
+Automatically: (mocha required)
 ./my-pages/script/testLocally
 
 Manually:
