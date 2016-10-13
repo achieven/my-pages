@@ -1,9 +1,8 @@
 #!/bin/sh
  
-ssh achi@159.203.65.93 <<EOF
-  cd ~/hello-jenkins
-  git pull
-  npm install --production
-  forever restartall
+  cd my-pages
+  npm i --production
+  forever stopall
+  forever start index.js
   exit
 EOF

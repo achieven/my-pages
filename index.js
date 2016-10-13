@@ -29,7 +29,7 @@ app.get('/', function (req, res, next) {
         {name: 'User Details', link: '/userDetails', tools: 'sqlite, userAgent, ipinfo'},
         {name: 'Simple Rest Api', link: '/simplerestapi', tools: 'sqlite'},
         {name: 'Emitter', link: '/emitter', tools: 'react, socket.io'},
-        {name: 'Digital Wallet', link: '/backend', tools: 'colu sdk'}
+        {name: 'Digital Wallet', link: '/backend', tools: 'colu sdk, async'}
     ]
     var mainProjectGithubLink = 'https://github.com/achieven/my-pages'
     var html = Handlebars.compile(fs.readFileSync('./app.html', 'utf8'))({
