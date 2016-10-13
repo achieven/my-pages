@@ -183,6 +183,7 @@ let Emitter = React.createClass({
         }, "jsonp")
     },
     render: function () {
+        $('body').attr('style', "background-image: url(http://supernovathemes.com/wp-content/themes/supernovathemes/images/bg/b9.png);")
         return (
             <div>
                 <div className="container">

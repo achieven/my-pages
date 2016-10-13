@@ -57,8 +57,7 @@ app.get('/emitter', function (req, res) {
     ], function (React,
                  ReactDOMServer,
                  browserify,
-                 jsx
-    ) {
+                 jsx) {
 
         jsx.install();
         app.use('/bundle.js', function (req, res) {
@@ -85,20 +84,20 @@ app.get('/emitter', function (req, res) {
 
 function emitterHelper() {
     var util = require('./mywebsites/backend/util/util').processRequests.encoder
-        io.of('/emitterPage').on('connection', function (socket) {
-            socket.on('/startEmitter', function (data) {
-                if (socket.emitJsonIntervalId) {
-                    clearInterval(socket.emitJsonIntervalId);
-                }
-                socket.emitJsonIntervalId = setInterval(function () {
-                    var jsonObjectToEmit = util.generateJson();
-                    socket.emit('/showEmittedJson', jsonObjectToEmit);
-                }, 1000 / data.emitFrequency);
-            });
-            socket.on('disconnect', function () {
+    io.of('/emitterPage').on('connection', function (socket) {
+        socket.on('/startEmitter', function (data) {
+            if (socket.emitJsonIntervalId) {
                 clearInterval(socket.emitJsonIntervalId);
-            })
+            }
+            socket.emitJsonIntervalId = setInterval(function () {
+                var jsonObjectToEmit = util.generateJson();
+                socket.emit('/showEmittedJson', jsonObjectToEmit);
+            }, 1000 / data.emitFrequency);
         });
+        socket.on('disconnect', function () {
+            clearInterval(socket.emitJsonIntervalId);
+        })
+    });
 }
 emitterHelper()
 
@@ -294,32 +293,32 @@ function messengerHelper() {
         io.of('/messengerReact').on('connection', function (socket) {
             socketId = util.addSocket(socket, allClientSockets, socketId)
             socket.on('login', function (data) {
-                util.login(redisClient, data, function(message, param){
+                util.login(redisClient, data, function (message, param) {
                     socket.emit(message, param)
                 })
             })
             socket.on('signup', function (data) {
-                util.signup(redisClient, data, function(message, param){
+                util.signup(redisClient, data, function (message, param) {
                     socket.emit(message, param)
                 })
             })
             socket.on('clientMessage', function (data) {
-                util.sendMessage(socket, allClientSockets, data, function(_socket, message, param){
+                util.sendMessage(socket, allClientSockets, data, function (_socket, message, param) {
                     _socket.emit(message, param)
                 })
             })
-            socket.on('saveCorrespondence', function(data){
-                util.saveChat(redisClient, data, function(message){
+            socket.on('saveCorrespondence', function (data) {
+                util.saveChat(redisClient, data, function (message) {
                     socket.emit(message)
                 })
             })
-            socket.on('getCorrespondence', function(username){
-                util.showChat(socket, redisClient, username, function(message){
+            socket.on('getCorrespondence', function (username) {
+                util.showChat(socket, redisClient, username, function (message) {
                     socket.emit(message)
                 })
             })
-            socket.on('deleteCorrespondence', function(username){
-                util.deleteChat(redisClient, username, function(message, param){
+            socket.on('deleteCorrespondence', function (username) {
+                util.deleteChat(redisClient, username, function (message, param) {
                     socket.emit(message, param)
                 })
             })
@@ -327,7 +326,7 @@ function messengerHelper() {
                 allClientSockets = util.removeSocket(socket, allClientSockets)
             })
         })
-        function buildPage(){
+        function buildPage() {
             var webpack = require('webpack')
             var webpackDevMiddleware = require('webpack-dev-middleware')
             //var webpackHotMiddleware = require('webpack-hot-middleware')
@@ -337,6 +336,7 @@ function messengerHelper() {
             app.use(webpackDevMiddleware(compiler, {noInfo: true, publicPath: config.output.publicPath}))
             //app.use(webpackHotMiddleware(compiler))
         }
+
         buildPage()
     })
 }
@@ -484,4 +484,3 @@ app.post('/userDetails/userdata', function (req, res) {
     })
 })
 
-module.exports = app;
