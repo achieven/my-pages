@@ -20,7 +20,7 @@ open browser at http://localhost:5000
 To run tests:
 
 Automatically:
-./my-pages/script/test
+./my-pages/script/testLocally
 
 Manually:
 Unit tests:  
