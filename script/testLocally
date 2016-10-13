@@ -1,0 +1,7 @@
+#!/bin/sh
+
+cd my-pages
+npm i 
+mocha ./test/unitTests
+node ./test/browserTests/browserTests.js
+

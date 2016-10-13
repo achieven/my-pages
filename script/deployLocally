@@ -1,0 +1,5 @@
+#!/bin/sh
+ 
+cd my-pages
+npm i --production
+nodemon
