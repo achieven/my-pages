@@ -19,7 +19,7 @@ open browser at http://localhost:5000
 
 To run tests:
 
-Automatically: (mocha required)  
+Automatically: (mocha, firefox required)  
 ./my-pages/script/testLocally
 
 Manually:  
