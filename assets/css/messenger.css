@@ -26,6 +26,7 @@
     top: 70px;
     bottom: 60px;
     height: calc(100% - 130px);
+    z-index: -1;
 }
 
 .chatBottom {
@@ -37,9 +38,7 @@
 
 .deleteCorrespondenceWarning {
     z-index: 1;
-    position:absolute;
-    bottom: 100px;
-    padding-right: 15px;
+    padding-top: 60px;
 }
 
 .yesDeleteCorrespondence {
