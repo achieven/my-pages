@@ -7,6 +7,10 @@
     word-wrap: break-word;
 }
 
+.helloUsername {
+    margin-top: 10px;
+}
+
 .chatTop {
     position: fixed;
     width: 100%;
@@ -15,9 +19,27 @@
     padding-top: 10px;
 }
 
+.chatBody {
+    overflow: scroll;
+    position: fixed;
+    width: 100%;
+    top: 70px;
+    bottom: 60px;
+    height: calc(100% - 130px);
+}
+
+.chatBottom {
+    position: fixed;
+    width: 100%;
+    bottom: 0;
+    height: 60px;
+}
+
 .deleteCorrespondenceWarning {
-    position: relative;
-    zIndex: 1;
+    z-index: 1;
+    position:absolute;
+    bottom: 100px;
+    padding-right: 15px;
 }
 
 .yesDeleteCorrespondence {
@@ -30,21 +52,9 @@
     right: 0;
 }
 
-.chatTable {
-    overflow: scroll;
-    position: fixed;
-    top: 70px;
-    bottom: 60px;
-}
-
-.chatBottom {
-    position: fixed;
+.submitMessage {
     width: 100%;
-    bottom: 0;
-    height: 60px;
 }
 
-.helloUsername {
-    margin-top: 10px;
-}
+
 
