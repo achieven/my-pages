@@ -222,36 +222,6 @@ var ChatPage = React.createClass({
                                         <button className="btn btn-danger col-xs-12 deleteCorrespondence">Delete
                                             Chat
                                         </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div className="chatBody">
-                    <div className="container">
-                        <div className="row">
-                            <div className="col-sm-10 col-xs-8">
-                                <table className="table">
-                                    <tbody>
-                                    {messages || []}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div className="chatBottom">
-                    <div className="positionRelative">
-                        <div className="container">
-                            <div className="row">
-                                <form className="messageForm">
-                                    <div className="col-sm-10 col-xs-8">
-                                        <div className="form-group">
-                                            <input className="form-control" type='text' placeholder='message'/>
-                                        </div>
-                                    </div>
-                                    <div className="col-sm-2 col-xs-4">
                                         <div className="deleteCorrespondenceWarning hide">
                                             <div className="alert alert-warning text-center">
                                                 Are you sure you want to delete this chat? This is an irreversible step!
@@ -265,10 +235,41 @@ var ChatPage = React.createClass({
                                                 </button>
                                             </div>
                                         </div>
-                                        <button className="btn btn-success submitMessage" type='submit'>Submit</button>
                                     </div>
-                                </form>
+                                </div>
                             </div>
+                        </div>
+                    </div>
+                </div>
+                <div className="chatBody">
+                    <div className="positionRelative">
+
+                        <div className="container">
+                            <div className="row">
+                                <div className="col-sm-10 col-xs-8">
+                                    <table className="table">
+                                        <tbody>
+                                        {messages || []}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div className="chatBottom">
+                    <div className="container">
+                        <div className="row">
+                            <form className="messageForm">
+                                <div className="col-sm-10 col-xs-8">
+                                    <div className="form-group">
+                                        <input className="form-control" type='text' placeholder='message'/>
+                                    </div>
+                                </div>
+                                <div className="col-sm-2 col-xs-4">
+                                    <button className="btn btn-success submitMessage" type='submit'>Submit</button>
+                                </div>
+                            </form>
                         </div>
                     </div>
                 </div>
