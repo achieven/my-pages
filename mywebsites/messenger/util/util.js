@@ -67,9 +67,7 @@ var util = {
     deleteChat: function (redisClient, username, callback) {
         var redisCorrespondence = redisEnv + 'correspondence' + username
         redisClient.del(redisCorrespondence, function (err, reply) {
-            if (reply === 1) {
                 callback('correspondenceDeleted')
-            }
         })
     },
     removeSocket(socket, allClientSockets){
