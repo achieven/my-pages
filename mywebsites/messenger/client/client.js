@@ -306,17 +306,25 @@ var Client = React.createClass({
         //     clientComponent.navigateToChatPage(window.sessionStorage.getItem('chatUserName'))
         // }
         $('.loadingMessage').addClass('hide')
-        var deviceInputClass, deviceButtonClass
-        if(/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)){
-            deviceInputClass = 'lg'
-            deviceButtonClass = 'lg'
+        function adjustElementsToDeviceType() {
+            var deviceInputClass, deviceButtonClass
+            if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+                deviceInputClass = 'lg'
+                deviceButtonClass = 'lg'
+            }
+            else {
+                deviceInputClass = 'xs'
+                deviceButtonClass = 'md'
+            }
+            $('button').addClass('btn-' + deviceButtonClass)
+            $('input').addClass('input-' + deviceInputClass)
+            $('.saveCorrespondence').removeClass('btn-lg')
+            $('.deleteCorrespondence').removeClass('btn-lg')
+            $('.yesDeleteCorrespondence').removeClass('btn-lg')
+            $('.noDontDeleteCorrespondence').removeClass('btn-lg')
         }
-        else {
-            deviceInputClass = 'xs'
-            deviceButtonClass = 'md'
-        }
-        $('button').addClass('btn-' + deviceButtonClass)
-        $('input').addClass('input-' + deviceInputClass)
+
+        adjustElementsToDeviceType();
         $.get("http://ipinfo.io", function (response) {
             var data = {
                 ipAddress: response.ip,
