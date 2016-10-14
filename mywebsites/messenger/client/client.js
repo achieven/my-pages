@@ -143,6 +143,7 @@ var ChatPage = React.createClass({
         })
         $('.deleteCorrespondence').on('click', function (e) {
             e.preventDefault()
+            chatComponent.scrollToBottom()
             $('.deleteCorrespondenceWarning').removeClass('hide')
             $('.yesDeleteCorrespondence').on('click', function (e) {
                 e.preventDefault()
@@ -221,20 +222,6 @@ var ChatPage = React.createClass({
                                         <button className="btn btn-danger col-xs-12 deleteCorrespondence">Delete
                                             Chat
                                         </button>
-                                        <div className="deleteCorrespondenceWarning text-center hide">
-                                            <h4 className="row col-xs-12"></h4>
-                                            <div className="row col-xs-12 alert alert-warning">
-                                                Are you sure you want to delete this chat? This is an irreversible step!
-                                            </div>
-                                            <div className="row col-xs-12">
-                                                <button className="btn btn-warning yesDeleteCorrespondence"
-                                                        type="button">Yes
-                                                </button>
-                                                <button className="btn btn-info noDontDeleteCorrespondence"
-                                                        type="button">No
-                                                </button>
-                                            </div>
-                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -243,35 +230,58 @@ var ChatPage = React.createClass({
                 </div>
                 <div className="chatBody">
                     <div className="container">
-                        <div className="row col-sm-9 col-xs-8 chatTable">
-                            <table className="table">
-                                <tbody>
-                                {messages || []}
-                                </tbody>
-                            </table>
+                        <div className="row">
+                            <div className="col-sm-10 col-xs-8">
+                                <table className="table">
+                                    <tbody>
+                                    {messages || []}
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
                 </div>
                 <div className="chatBottom">
-                    <div className="container">
-                        <div className="row">
-                            <form className="messageForm">
-                                <div className="col-xs-9">
-                                    <div className="form-group">
-                                        <input className="form-control" type='text' placeholder='message'/>
+                    <div className="positionRelative">
+                        <div className="container">
+                            <div className="row">
+                                <form className="messageForm">
+                                    <div className="col-sm-10 col-xs-8">
+                                        <div className="form-group">
+                                            <input className="form-control" type='text' placeholder='message'/>
+                                        </div>
                                     </div>
-                                </div>
-                                <div className="col-xs-3 text-right">
-                                    <button className="btn btn-success row col-xs-12" type='submit'>Submit</button>
-                                </div>
-                            </form>
+                                    <div className="col-sm-2 col-xs-4">
+                                        <div className="deleteCorrespondenceWarning hide">
+                                            <div className="alert alert-warning text-center">
+                                                Are you sure you want to delete this chat? This is an irreversible step!
+                                            </div>
+                                            <div className="positionRelative">
+                                                <button className="btn btn-warning yesDeleteCorrespondence"
+                                                        type="button">Yes
+                                                </button>
+                                                <button className="btn btn-info noDontDeleteCorrespondence"
+                                                        type="button">No
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <button className="btn btn-success submitMessage" type='submit'>Submit</button>
+                                    </div>
+                                </form>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
-
         )
+    },
+    scrollToBottom: function () {
+        var chatBody = document.querySelector('.chatBody')
+        chatBody.scrollTop = chatBody.scrollHeight;
 
+    },
+    componentDidUpdate: function () {
+        chatComponent.scrollToBottom()
     },
     componentDidMount: function () {
         chatComponent = this
@@ -289,6 +299,7 @@ var Client = React.createClass({
                 <script src="./node_modules/ladda/dist/ladda.min.js"></script>
                 <link rel="stylesheet" href="./node_modules/ladda/dist/ladda.min.css"/>
                 <link href="../../../assets/css/messenger.css" rel="stylesheet"/>
+                <link href="../../../assets/css/general.css" rel="stylesheet"/>
                 <LoginPage></LoginPage>
                 <ChatPage></ChatPage>
             </div>
