@@ -3,14 +3,15 @@
     <script src="./node_modules/jquery/dist/jquery.min.js"></script>
     <link rel="stylesheet" href="./node_modules/bootstrap/dist/css/bootstrap.min.css">
     <script src="./node_modules/bootstrap/dist/js/bootstrap.min.js"></script>
+    <link href="./assets/css/general.css" rel="stylesheet"/>
 </head>
 <body style="background-image: url(./assets/images/landingPageGreyBackground.png); ">
 <div>
 
     <div class="container">
-        <h3 class="text-info">The source code of this page can be found <a class="text-warning" target="_blank"
+        <h2 class="text-info">The source code of this page can be found <a class="text-warning" target="_blank"
                                                                            href={{mainProjectGithubLink}}>here</a>
-        </h3>
+        </h2>
     </div>
     <div class="container">
         <h4 class="row col-xs-12"></h4>
@@ -19,15 +20,15 @@
             <div class="col-xs-12">
                 <table class="table">
                     <tr>
-                        <th>Project Name</th>
-                        <th>Some tools that are being used</th>
+                        <th><h2>Project Name</h2></th>
+                        <th><h2>Some tools that are being used</h2></th>
                     </tr>
 
 
                     {{#each projects}}
                     <tr>
-                        <td><a class="btn btn-info" target="_blank" href={{link}}>{{name}}</a></td>
-                        <td>{{tools}}</td>
+                        <td><a class="btn btn-info btn-lg" target="_blank" href={{link}}>{{name}}</a></td>
+                        <td><h3 class="h3VerticalMiddle">{{tools}}</h3></td>
                     </tr>
                     {{/each}}
                 </table>

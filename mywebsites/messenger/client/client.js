@@ -229,7 +229,7 @@ var ChatPage = React.createClass({
         var messagesDomElements = []
         this.state.messages.forEach(function (data) {
             var color, sender
-            if(window.localStorage.getItem('env') === 'dev'){
+            if (window.localStorage.getItem('env') === 'dev') {
                 color = data.sender === window.sessionStorage.getItem('chatUserName') ? chatComponent.colors.me : chatComponent.colors.others[(data.socketId) % (chatComponent.colors.others.length)]
                 sender = data.sender === window.sessionStorage.getItem('chatUserName') ? '' : data.sender
             }
@@ -253,7 +253,7 @@ var ChatPage = React.createClass({
                     <div className="container">
                         <div className="row">
                             <div className="col-sm-8 col-xs-4">
-                                <h3 className="helloUsername">Hello {this.state.username}!</h3>
+                                <h3 className="h3VerticalMiddle">Hello {this.state.username}!</h3>
                             </div>
                             <div className="col-sm-4 col-xs-8">
                                 <div className="row">
@@ -289,17 +289,14 @@ var ChatPage = React.createClass({
                     </div>
                 </div>
                 <div className="chatBody">
-                    <div className="positionRelative">
-
-                        <div className="container">
-                            <div className="row">
-                                <div className="col-sm-10 col-xs-8">
-                                    <table className="table">
-                                        <tbody>
-                                        {messages || []}
-                                        </tbody>
-                                    </table>
-                                </div>
+                    <div className="container">
+                        <div className="row">
+                            <div className="col-sm-10 col-xs-8">
+                                <table className="table">
+                                    <tbody>
+                                    {messages || []}
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
                     </div>
@@ -340,7 +337,7 @@ var Client = React.createClass({
     start: function () {
         $('.loadingMessage').addClass('hide')
         socket.removeAllListeners('env')
-        socket.on('env', function(env){
+        socket.on('env', function (env) {
             window.localStorage.setItem('env', env)
         })
         var storageUsername = window.localStorage.getItem('chatUserName')
