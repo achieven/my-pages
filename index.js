@@ -25,11 +25,11 @@ app.use(bodyParser.urlencoded({extended: true}));
 
 app.get('/', function (req, res, next) {
     var projects = [
-        {name: 'Messenger', link: '/messengerReact', tools: 'react, redis, socket.io, sessionStorage'},
+        {name: 'Messenger', link: '/messengerReact', tools: 'react, redis, socket.io, localStorage'},
         {name: 'User Details', link: '/userDetails', tools: 'sqlite, userAgent, ipinfo'},
         {name: 'Simple Rest Api', link: '/simplerestapi', tools: 'sqlite'},
         {name: 'Emitter', link: '/emitter', tools: 'react, socket.io'},
-        {name: 'Digital Wallet', link: '/backend', tools: 'colu sdk, async'}
+        {name: 'Digital Wallet', link: '/backend', tools: 'colu sdk, async.js'}
     ]
     var mainProjectGithubLink = 'https://github.com/achieven/my-pages'
     var html = Handlebars.compile(fs.readFileSync('./app.html', 'utf8'))({
@@ -292,6 +292,7 @@ function messengerHelper() {
         let socketId = 0
         io.of('/messengerReact').on('connection', function (socket) {
             socketId = util.addSocket(socket, allClientSockets, socketId)
+            socket.emit('env', process.env.NODE_ENV)
             socket.on('login', function (data) {
                 util.login(redisClient, data, function (message, param) {
                     socket.emit(message, param)
@@ -390,16 +391,15 @@ app.get('/userDetails', function (req, res) {
                 },
                 cpu: {header: 'Cpu', content: {architecture: {header: 'Architecture', content: cpuArchitecture}}}
             },
-            statisticsInfo: {
-                triplets: [{
+            statisticsInfo: 
+                {
                     browser: {header: 'Browser'},
                     engine: {header: 'Engine'},
-                    os: {header: 'OS'}
-                }, {
+                    os: {header: 'OS'},
                     device: {header: 'Device'},
                     cpu: {header: 'Cpu'}
-                }]
-            }
+                }
+            
         }
     });
     res.send(html);

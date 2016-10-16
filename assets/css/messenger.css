@@ -41,18 +41,22 @@
     padding-top: 60px;
 }
 
-.yesDeleteCorrespondence {
+.yesButton {
     position: absolute;
     left: 0;
 }
 
-.noDontDeleteCorrespondence {
+.noButton {
     position: absolute;
     right: 0;
 }
 
 .submitMessage {
     width: 100%;
+}
+
+.loginAs {
+    padding-top: 10px;
 }
 
 

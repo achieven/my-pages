@@ -53,18 +53,17 @@
            title="Number of unique entrances (different ip+user agent concatenation)">
         </i>
     </div>
-    {{#each this.triplets}}
     <div class="row">
-        {{#each this}}
-        <div class="col-xs-4">
+    {{#each this}}
+        <div class="col-md-4 col-sm-6 col-xs-12">
             <label>{{this.header}}</label>
             <div class="{{@key}}ChartsNotReady">Please wait while loading charts</div>
             <div class="{{@key}}ChartsEmpty hide">No statistics yet</div>
-            <div class="{{@key}}Charts"></div>
+            <div class="{{@key}}Charts userDetailsChart"></div>
         </div>
-        {{/each}}
-    </div>
+
     {{/each}}
+    </div>
     {{/equal}}
     {{/each}}
 </div>
