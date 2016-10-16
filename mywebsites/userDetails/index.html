@@ -59,7 +59,7 @@
             <label>{{this.header}}</label>
             <div class="{{@key}}ChartsNotReady">Please wait while loading charts</div>
             <div class="{{@key}}ChartsEmpty hide">No statistics yet</div>
-            <div class="{{@key}}Charts userDetailsChart"></div>
+            <div class="{{@key}}Charts"></div>
         </div>
 
     {{/each}}
@@ -114,6 +114,9 @@
                             {
                                 series: series,
                                 labels: labels
+                            },
+                            {
+                                height: '360px'
                             }
                     )
 
