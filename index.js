@@ -295,11 +295,24 @@ function messengerHelper() {
             socket.emit('env', process.env.NODE_ENV)
             socket.on('login', function (data) {
                 util.login(redisClient, data, function (message, param) {
+                    socket.username = param
                     socket.emit(message, param)
+                    socket.emit('addOnlineUser', socket.username)
                 })
             })
             socket.on('signup', function (data) {
                 util.signup(redisClient, data, function (message, param) {
+                    socket.username = param
+                    socket.emit(message, param)
+                    socket.emit('addOnlineUser', username)
+                })
+            })
+            socket.on('loginAs', function(username){
+                socket.username = username
+                socket.emit('addOnlineUser', username)
+            })
+            socket.on('getOnlineUsers', function(){
+                util.getOnlineUsers(socket, allClientSockets, function(message, param){
                     socket.emit(message, param)
                 })
             })
@@ -324,6 +337,8 @@ function messengerHelper() {
                 })
             })
             socket.on('disconnect', function () {
+                console.log(socket.socketId, socket.username, 'disconnected')
+                socket.emit('removeOnlineUser', socket.username)
                 allClientSockets = util.removeSocket(socket, allClientSockets)
             })
         })

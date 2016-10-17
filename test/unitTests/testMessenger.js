@@ -74,7 +74,7 @@ describe('signup', function(){
     })
 })
 
-describe('sendMessage', function(){
+describe('waitForMessageSubmit', function(){
     it('should send message to me if socketId is same and to other if socketId is different', function(){
         var allClientSockets = [
             {socketId: 1},
@@ -82,7 +82,7 @@ describe('sendMessage', function(){
         ]
         var socket = {socketId: 1}
         var data = {}
-        util.sendMessage(socket,allClientSockets,data, function(_socket, message, param){
+        util.waitForMessageSubmit(socket,allClientSockets,data, function(_socket, message, param){
             if(_socket.socketId ===1){
                 expect(message).to.be.equal('serverMessageToMe')
                 expect(param).to.eql({socketId: 1})

@@ -41,6 +41,16 @@ var util = {
             }
         })
     },
+    getOnlineUsers: function(socket, allClientSockets, callback){
+        var onlineUsers = []
+        allClientSockets.forEach(function(_socket){
+            console.log(socket.username,_socket.username)
+            if (socket.username && _socket.username && socket.username != _socket.username) {
+                onlineUsers.push(_socket.username)
+            }
+        })
+        callback('showOnlineUsers', onlineUsers)
+    },
     sendMessage: function (socket, allClientSockets, data, callback) {
         data.socketId = socket.socketId
         allClientSockets.forEach(function (_socket) {
