@@ -312,9 +312,6 @@ function messengerHelper() {
                 socket.emit('addOnlineUser', username)
             })
             socket.on('getOnlineUsers', function(){
-                allClientSockets.forEach(function(_socket){
-                    console.log(_socket.username)
-                })
                 util.getOnlineUsers(socket, allClientSockets, function(_socket, message, param){
                     _socket.username && _socket.emit(message, param)
                 })
