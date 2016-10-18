@@ -276,7 +276,10 @@ var ChatPage = React.createClass({
         socket.emit('getOnlineUsers')
         socket.removeAllListeners('showOnlineUsers')
         socket.on('showOnlineUsers', function(onlineUsers){
-            console.log(onlineUsers)
+            var indexOfMe = onlineUsers.findIndex(function(user){
+                return user === clientComponent.getUsernameStorage()
+            })
+            onlineUsers.splice(indexOfMe, 1)
             chatComponent.setState({
                 onlineUsers: onlineUsers
             })
@@ -302,6 +305,7 @@ var ChatPage = React.createClass({
             thisComponent.handleIncomingMessage(data.message, data.sender)
         })
     },
+
     handleIncomingMessage: function (message, sender, socketId) {
         var messages = this.updateStateWithoutRendering(message, sender, socketId)
         this.setState({
@@ -499,6 +503,12 @@ var Client = React.createClass({
                 window.sessionStorage.setItem('chatUserName', username)
             }
         }
+    },
+    getUsernameStorage: function(){
+        if(window.localStorage.getItem('env') === 'dev'){
+            return window.sessionStorage.getItem('chatUserName')
+        }
+        return window.localStorage.getItem('chatUserName')
     },
     adjustElementsToDeviceType: function(){
         var deviceInputClass, deviceButtonClass

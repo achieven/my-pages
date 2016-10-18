@@ -312,8 +312,11 @@ function messengerHelper() {
                 socket.emit('addOnlineUser', username)
             })
             socket.on('getOnlineUsers', function(){
-                util.getOnlineUsers(socket, allClientSockets, function(message, param){
-                    socket.emit(message, param)
+                allClientSockets.forEach(function(_socket){
+                    console.log(_socket.username)
+                })
+                util.getOnlineUsers(socket, allClientSockets, function(_socket, message, param){
+                    _socket.username && _socket.emit(message, param)
                 })
             })
             socket.on('clientMessage', function (data) {
@@ -337,7 +340,6 @@ function messengerHelper() {
                 })
             })
             socket.on('disconnect', function () {
-                console.log(socket.socketId, socket.username, 'disconnected')
                 socket.emit('removeOnlineUser', socket.username)
                 allClientSockets = util.removeSocket(socket, allClientSockets)
             })

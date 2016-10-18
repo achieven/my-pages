@@ -41,15 +41,15 @@ var util = {
             }
         })
     },
-    getOnlineUsers: function(socket, allClientSockets, callback){
+    getOnlineUsers: function (socket, allClientSockets, callback) {
         var onlineUsers = []
-        allClientSockets.forEach(function(_socket){
-            console.log(socket.username,_socket.username)
-            if (socket.username && _socket.username && socket.username != _socket.username) {
-                onlineUsers.push(_socket.username)
-            }
+        allClientSockets.forEach(function (_socket) {
+            _socket.username && onlineUsers.push(_socket.username)
         })
-        callback('showOnlineUsers', onlineUsers)
+        allClientSockets.forEach(function(_socket){
+            _socket.username && callback(_socket,'showOnlineUsers', onlineUsers)
+        })
+
     },
     sendMessage: function (socket, allClientSockets, data, callback) {
         data.socketId = socket.socketId
@@ -77,7 +77,7 @@ var util = {
     deleteChat: function (redisClient, username, callback) {
         var redisCorrespondence = redisEnv + 'correspondence' + username
         redisClient.del(redisCorrespondence, function (err, reply) {
-                callback('correspondenceDeleted')
+            callback('correspondenceDeleted')
         })
     },
     removeSocket(socket, allClientSockets){
