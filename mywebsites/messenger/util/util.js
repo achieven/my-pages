@@ -46,10 +46,21 @@ var util = {
         allClientSockets.forEach(function (_socket) {
             _socket.username && onlineUsers.push(_socket.username)
         })
-        allClientSockets.forEach(function(_socket){
-            _socket.username && callback(_socket,'showOnlineUsers', onlineUsers)
+        allClientSockets.forEach(function (_socket) {
+            _socket.username && callback(_socket, 'showOnlineUsers', onlineUsers)
         })
 
+    },
+    openPrivateChat: function (redisClient, chatParticipants, callback) {
+        var privateChatInDB = process.env.NODE_ENV + 'privateChat' + chatParticipants.from + '#' + chatParticipants.to
+        redisClient.exists(privateChatInDB, function(err, reply){
+            if(reply === 1){
+                callback('showPrivateChat', messages)
+            }
+            else {
+                callback('showPrivateChat', [])
+            }
+        })
     },
     sendMessage: function (socket, allClientSockets, data, callback) {
         data.socketId = socket.socketId

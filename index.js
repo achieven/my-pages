@@ -293,6 +293,18 @@ function messengerHelper() {
         io.of('/messengerReact').on('connection', function (socket) {
             socketId = util.addSocket(socket, allClientSockets, socketId)
             socket.emit('env', process.env.NODE_ENV)
+            socket.removeAllListeners('login')
+            socket.removeAllListeners('signup')
+            socket.removeAllListeners('loginAs')
+            socket.removeAllListeners('getOnlineUsers')
+            socket.removeAllListeners('clientMessage')
+            socket.removeAllListeners('saveCorrespondence')
+            socket.removeAllListeners('getCorrespondence')
+            socket.removeAllListeners('deleteCorrespondence')
+            socket.removeAllListeners('openPrivateChat')
+
+
+
             socket.on('login', function (data) {
                 util.login(redisClient, data, function (message, param) {
                     socket.username = param
@@ -333,6 +345,11 @@ function messengerHelper() {
             })
             socket.on('deleteCorrespondence', function (username) {
                 util.deleteChat(redisClient, username, function (message, param) {
+                    socket.emit(message, param)
+                })
+            })
+            socket.on('openPrivateChat', function(chatParticipants){
+                util.openPrivateChat(redisClient, chatParticipants, function(message, param){
                     socket.emit(message, param)
                 })
             })
