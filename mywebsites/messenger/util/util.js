@@ -37,6 +37,7 @@ var util = {
             else {
                 redisClient.set(queryUsername, queryPassword, function (err, reply) {
                     callback('signupSuccess', data.username)
+                    callback('addOnlineUser', data.username)
                 })
             }
         })
@@ -116,7 +117,7 @@ var util = {
                     })
                 }
                 else {
-                    redisClient.set(fromToQuery, JSON.stringify([{message: data.message, sender: data.from}]))
+                    redisClient.set(query, JSON.stringify([{message: data.message, sender: data.from}]))
                 }
             })
         }

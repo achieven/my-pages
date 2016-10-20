@@ -313,9 +313,9 @@ function messengerHelper() {
             })
             socket.on('signup', function (data) {
                 util.signup(redisClient, data, function (message, param) {
+                    console.log(message, param)
                     socket.username = param
                     socket.emit(message, param)
-                    socket.emit('addOnlineUser', username)
                 })
             })
             socket.on('loginAs', function(username){
