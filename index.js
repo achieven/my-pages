@@ -298,10 +298,9 @@ function messengerHelper() {
             socket.removeAllListeners('loginAs')
             socket.removeAllListeners('getOnlineUsers')
             socket.removeAllListeners('clientMessage')
-            socket.removeAllListeners('saveCorrespondence')
-            socket.removeAllListeners('getCorrespondence')
             socket.removeAllListeners('deleteCorrespondence')
             socket.removeAllListeners('openPrivateChat')
+            socket.removeAllListeners('openGroupChat')
 
 
 
@@ -329,22 +328,12 @@ function messengerHelper() {
                 })
             })
             socket.on('clientMessage', function (data) {
-                util.sendMessage(socket, allClientSockets, data, function (_socket, message, param) {
+                util.sendMessage(socket, redisClient, allClientSockets, data, function (_socket, message, param) {
                     _socket.emit(message, param)
                 })
             })
-            socket.on('saveCorrespondence', function (data) {
-                util.saveChat(redisClient, data, function (message) {
-                    socket.emit(message)
-                })
-            })
-            socket.on('getCorrespondence', function (username) {
-                util.showChat(socket, redisClient, username, function (message) {
-                    socket.emit(message)
-                })
-            })
-            socket.on('deleteCorrespondence', function (username) {
-                util.deleteChat(redisClient, username, function (message, param) {
+            socket.on('deleteCorrespondence', function (deleterUsername, deleteChatWith) {
+                util.deleteChat(redisClient, deleterUsername, deleteChatWith, function (message, param) {
                     socket.emit(message, param)
                 })
             })
@@ -353,7 +342,13 @@ function messengerHelper() {
                     socket.emit(message, param)
                 })
             })
+            socket.on('openGroupChat', function(username){
+                util.openGroupChat(redisClient, username, function(message, param){
+                    socket.emit(message, param)
+                })
+            })
             socket.on('disconnect', function () {
+                console.log('disconnecting', socket.username)
                 socket.emit('removeOnlineUser', socket.username)
                 allClientSockets = util.removeSocket(socket, allClientSockets)
             })

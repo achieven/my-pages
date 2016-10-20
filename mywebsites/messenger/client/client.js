@@ -172,19 +172,19 @@ var MessageLine = React.createClass({
     getInitialState: function () {
         return {
             color: this.props.color || '',
-            sender: this.props.sender || '',
+            from: this.props.from || '',
             message: this.props.message || ''
         }
     },
 
     render: function () {
         var classname = "alert " + this.props.color
-        var messageText = this.props.sender + ': ' + this.props.message
+        var textInline = this.props.from + ': ' + this.props.message
         return (
             <tr>
                 <td className={classname}>
-                    <p className="messageSender">{this.props.sender}</p>
-                    <h6 className="messageText">{this.props.message}</h6>
+                    <p className="messageSender">{this.props.from}</p>
+                    <h6 className="textInline">{this.props.message}</h6>
                 </td>
             </tr>
         )
@@ -196,15 +196,29 @@ var OnlineUserLine = React.createClass({
     getInitialState: function () {
         return {
             user: this.props.user || '',
-            button: this.props.button || ''
+            button: this.props.button || '',
+            newMesages: this.props.newMessages || 0
         }
     },
     render: function () {
-        var className = "messageText btn btn-" + this.props.button
+        var className = "textInline onlineUserBtn btn btn-" + this.props.button
+        var newMessagesLine
+        switch (this.props.newMessages) {
+            case 0:
+                newMessagesLine = ''
+                break
+            case 1:
+                newMessagesLine = '1 new message!'
+                break
+            default:
+                newMessagesLine = this.props.newMessages + ' new messages!'
+                break
+        }
         return (
             <tr>
                 <td className="alert alert-info">
                     <button className={className}>{this.props.user}</button>
+                    <label className="newMessage">{newMessagesLine}</label>
                 </td>
             </tr>
         )
@@ -231,44 +245,27 @@ var ChatPage = React.createClass({
     },
     start: function (username) {
         $('.chatPage').removeClass('hide')
+        this.setState({
+            username: username
+        })
         this.showCorrespondence(username);
         this.showOnlineUsers()
         this.listenToUserMessages()
         this.waitForMessageSubmit(username);
-        this.waitForChatSave();
         this.waitForChatDelete();
-        this.setState({
-            username: username
-        })
+        
     },
     waitForMessageSubmit: function (username) {
-        $('.messageForm').on('submit', function (e) {
+        var thisComponent = this
+        $('.submitMessage').on('click', function (e) {
             e.preventDefault()
             var message = $('.messageForm :input').val()
-            message && socket.emit('clientMessage', {message: message, sender: username})
+            message && socket.emit('clientMessage', {
+                message: message,
+                from: username,
+                to: thisComponent.state.otherUsername
+            })
             $('.messageForm')[0].reset()
-        })
-    },
-    waitForChatSave: function () {
-        $('.saveCorrespondence').on('click', function (e) {
-            $('.saveCorrespondence .ladda-spinner').removeClass('hide')
-            var laddaSaveChat = Ladda.create(document.querySelector('.saveCorrespondence'))
-            laddaSaveChat.start()
-            e.preventDefault()
-            socket.emit('saveCorrespondence', {
-                username: chatComponent.state.username,
-                messages: chatComponent.state.messages
-            })
-            socket.removeAllListeners('correspondenceSaved')
-            socket.on('correspondenceSaved', function () {
-                laddaSaveChat.stop()
-                $('.saveCorrespondence').removeClass('ladda-button')
-                $('.saveCorrespondence .ladda-spinner').addClass('hide')
-                $('.chatSavedMessage').removeClass('hide')
-                setTimeout(function () {
-                    $('.chatSavedMessage').addClass('hide')
-                }, 2000)
-            })
         })
     },
     waitForChatDelete: function () {
@@ -278,7 +275,7 @@ var ChatPage = React.createClass({
             $('.deleteCorrespondenceWarning').removeClass('hide')
             $('.yesDeleteCorrespondence').on('click', function (e) {
                 e.preventDefault()
-                socket.emit('deleteCorrespondence', chatComponent.state.username)
+                socket.emit('deleteCorrespondence', chatComponent.state.username, chatComponent.state.otherUsername)
                 socket.removeAllListeners('correspondenceDeleted')
                 socket.on('correspondenceDeleted', function (data) {
                     $('.deleteCorrespondenceWarning').addClass('hide')
@@ -294,14 +291,28 @@ var ChatPage = React.createClass({
         })
     },
     waitForPrivateChatClick: function () {
-        $('.messageText').unbind('click').click(function (e) {
+        var thisComponent = this
+        $('.onlineUserBtn').unbind('click').click(function (e) {
+            $('.writeToEveryone').removeClass('btn-info').addClass('btn-default')
             var userToSend = e.currentTarget.textContent
             socket.emit('openPrivateChat', {from: clientComponent.getUsernameStorage(), to: userToSend})
             socket.removeAllListeners('showPrivateChat')
-            socket.on('showPrivateChat', function(messages){
+            socket.on('showPrivateChat', function (messages) {
                 chatComponent.setState({
-                    messages:messages,
-                    otherUsername: userToSend
+                    messages: messages,
+                    otherUsername: userToSend,
+                    onlineUsers: thisComponent.resetNewMessagesToUser(userToSend)
+                })
+            })
+        })
+        $('.writeToEveryone').unbind('click').click(function (e) {
+            $('.writeToEveryone').removeClass('btn-defualt').addClass('btn-info')
+            socket.emit('openGroupChat', thisComponent.state.username)
+            socket.removeAllListeners('showGroupChat')
+            socket.on('showGroupChat', function(messages){
+                chatComponent.setState({
+                    messages: messages,
+                    otherUsername: undefined,
                 })
             })
         })
@@ -311,7 +322,7 @@ var ChatPage = React.createClass({
         socket.removeAllListeners('showOnlineUsers')
         socket.on('showOnlineUsers', function (onlineUsers) {
             var indexOfMe = onlineUsers.findIndex(function (user) {
-                return user === clientComponent.getUsernameStorage()
+                return user.username === clientComponent.getUsernameStorage()
             })
             onlineUsers.splice(indexOfMe, 1)
             chatComponent.setState({
@@ -320,11 +331,12 @@ var ChatPage = React.createClass({
         })
     },
     showCorrespondence: function (username) {
-        socket.emit('getCorrespondence', username)
-        socket.removeAllListeners('showCorrespondence')
-        socket.on('showCorrespondence', function (messages) {
+        socket.emit('openGroupChat', username)
+        socket.removeAllListeners('showGroupChat')
+        socket.on('showGroupChat', function(messages){
             chatComponent.setState({
-                messages: messages
+                messages: messages,
+                otherUsername: undefined,
             })
         })
     },
@@ -333,39 +345,84 @@ var ChatPage = React.createClass({
         socket.removeAllListeners('serverMessageToOther')
         socket.removeAllListeners('serverMessageToMe')
         socket.on('serverMessageToOther', function (data) {
-            thisComponent.handleIncomingMessage(data.message, data.sender, data.socketId)
+            thisComponent.recieveMessageFromOther(data.message, data.from, data.to)
         })
         socket.on('serverMessageToMe', function (data) {
-            thisComponent.handleIncomingMessage(data.message, data.sender)
+            thisComponent.recieveMessageFromMe(data.message, data.from)
         })
     },
-
-    handleIncomingMessage: function (message, sender, socketId) {
-        var messages = this.updateStateWithoutRendering(message, sender, socketId)
+    recieveMessageFromOther: function (message, from, to) {
+        if (to) {
+            if (to === clientComponent.getUsernameStorage()) {
+                if (from === this.state.otherUsername) {
+                    var messages = this.updateMessages(message, from)
+                    this.setState({
+                        messages: messages
+                    })
+                }
+                else {
+                    var onlineUsers = this.addNewMessageToUser(from)
+                    this.setState({
+                        onlineUsers: onlineUsers
+                    })
+                }
+            }
+        }
+        else {
+            if(!(this.state.otherUsername)){
+                var messages = this.updateMessages(message, from)
+                this.setState({
+                    messages: messages
+                })
+            }
+        }
+    },
+    recieveMessageFromMe: function (message, from) {
+        var messages = this.updateMessages(message, from)
         this.setState({
             messages: messages
         })
     },
-    updateStateWithoutRendering: function (message, sender, socketId) {
+    updateMessages: function (message, from) {
         var messages = this.state.messages
-        messages.push({message: message, sender: sender, socketId: socketId})
+        messages.push({message: message, from: from})
         return messages
+    },
+    addNewMessageToUser: function (from) {
+        var thisComponent = this
+        var onlineUsers = this.state.onlineUsers
+        onlineUsers.forEach(function (user) {
+            if (from === user.username) {
+                user.newMessages++
+            }
+        })
+        return onlineUsers
+    },
+    resetNewMessagesToUser: function(from){
+        var thisComponent = this
+        var onlineUsers = this.state.onlineUsers
+        onlineUsers.forEach(function (user) {
+            if (from === user.username) {
+                user.newMessages = 0
+            }
+        })
+        return onlineUsers
     },
     buildMessagesToRender: function () {
         var messagesDomElements = []
         this.state.messages.forEach(function (data) {
-            var color, sender
+            var color, from
             if (window.localStorage.getItem('env') === 'dev') {
-                color = data.sender === window.sessionStorage.getItem('chatUserName') ? chatComponent.colors.me : chatComponent.colors.others[(data.socketId) % (chatComponent.colors.others.length)]
-                sender = data.sender === window.sessionStorage.getItem('chatUserName') ? '' : data.sender
+                color = data.from === window.sessionStorage.getItem('chatUserName') ? chatComponent.colors.me : chatComponent.colors.others[(data.socketId) % (chatComponent.colors.others.length)]
+                from = data.from === window.sessionStorage.getItem('chatUserName') ? '' : data.from
             }
             else {
-                color = data.sender === window.localStorage.getItem('chatUserName') ? chatComponent.colors.me : chatComponent.colors.others[(data.socketId) % (chatComponent.colors.others.length)]
-                sender = data.sender === window.localStorage.getItem('chatUserName') ? '' : data.sender
+                color = data.from === window.localStorage.getItem('chatUserName') ? chatComponent.colors.me : chatComponent.colors.others[(data.socketId) % (chatComponent.colors.others.length)]
+                from = data.from === window.localStorage.getItem('chatUserName') ? '' : data.from
             }
 
             messagesDomElements.push(
-                <MessageLine key={chatComponent.messageKey++} message={data.message} sender={sender}
+                <MessageLine key={chatComponent.messageKey++} message={data.message} from={from}
                              color={color}></MessageLine>
             )
         })
@@ -375,18 +432,23 @@ var ChatPage = React.createClass({
         var onlineUsersDomElements = []
         var onlineUserKey = 0
         this.state.onlineUsers.forEach(function (user) {
-            if(!chatComponent){
-                onlineUsersDomElements.push(<OnlineUserLine key={onlineUserKey++} user={user} button="default"></OnlineUserLine>)
+            if (!chatComponent) {
+                onlineUsersDomElements.push(<OnlineUserLine key={onlineUserKey++} user={user.username}
+                                                            button="default"
+                                                            newMessages={user.newMessages}></OnlineUserLine>)
             }
-            else if(chatComponent.state.otherUsername === user){
-                onlineUsersDomElements.push(<OnlineUserLine key={onlineUserKey++} user={user} button="info"></OnlineUserLine>)
+            else if (chatComponent.state.otherUsername === user.username) {
+                onlineUsersDomElements.push(<OnlineUserLine key={onlineUserKey++} user={user.username}
+                                                            button="info"
+                                                            newMessages={user.newMessages}></OnlineUserLine>)
             }
             else {
-                onlineUsersDomElements.push(<OnlineUserLine key={onlineUserKey++} user={user} button="default"></OnlineUserLine>)
+                onlineUsersDomElements.push(<OnlineUserLine key={onlineUserKey++} user={user.username}
+                                                            button="default"
+                                                            newMessages={user.newMessages}></OnlineUserLine>)
             }
-            
         })
-        return onlineUsersDomElements
+        return onlineUsersDomElements.length > 0 ? onlineUsersDomElements : undefined
     },
     render: function () {
         var messages = this.buildMessagesToRender()
@@ -402,12 +464,6 @@ var ChatPage = React.createClass({
                             <div className="col-sm-4 col-xs-8">
                                 <div className="row">
                                     <div className="col-xs-6">
-                                        <button className="btn btn-info col-xs-12 saveCorrespondence"
-                                                data-style="zoom-in" type='submit'>
-                                            <span className="ladda-label">Save Chat</span>
-                                            <span className="ladda-spinner"></span>
-                                        </button>
-                                        <h5 className="chatSavedMessage text-center hide">Chat Saved!</h5>
                                     </div>
                                     <div className="col-xs-6">
                                         <button className="btn btn-danger col-xs-12 deleteCorrespondence">Delete
@@ -437,8 +493,23 @@ var ChatPage = React.createClass({
                         <div className="row">
                             <div className="col-xs-2">
                                 <table className="table">
+                                    <thead>
+                                    <tr>
+                                        <th>
+                                            <div className="row">
+                                                <button className="col-xs-12 writeToEveryone btn btn-info">Write to
+                                                    everyone
+                                                </button>
+                                            </div>
+                                            <div className="row text-center">Or</div>
+                                            <div className="row text-center tableThReduceFontWeight">Contact online users:</div>
+                                        </th>
+                                    </tr>
+                                    </thead>
                                     <tbody>
-                                    {onlineUsers || []}
+                                    {onlineUsers || <tr>
+                                        <td>No users online</td>
+                                    </tr>}
                                     </tbody>
                                 </table>
                             </div>
@@ -474,7 +545,6 @@ var ChatPage = React.createClass({
     scrollToBottom: function () {
         var chatBody = document.querySelector('.chatBody')
         chatBody.scrollTop = chatBody.scrollHeight;
-
     },
     componentDidUpdate: function () {
         chatComponent.scrollToBottom()
@@ -566,7 +636,7 @@ var Client = React.createClass({
         }
         $('button').addClass('btn-' + deviceButtonClass)
         $('input').addClass('input-' + deviceInputClass)
-        $('.saveCorrespondence').removeClass('btn-lg')
+
         $('.deleteCorrespondence').removeClass('btn-lg')
         $('.yesDeleteCorrespondence').removeClass('btn-lg')
         $('.noDontDeleteCorrespondence').removeClass('btn-lg')

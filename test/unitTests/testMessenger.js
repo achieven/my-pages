@@ -107,3 +107,5 @@ describe('removeSocket', function(){
         expect(allClientSockets[0]).to.eql({socketId: 2})
     })
 })
+
+describe('')

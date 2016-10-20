@@ -2,7 +2,7 @@
     font-weight: bold;
 }
 
-.messageText {
+.textInline {
     display: inline;
     word-wrap: break-word;
 }
@@ -53,6 +53,10 @@
 
 .loginAs {
     padding-top: 10px;
+}
+
+.tableThReduceFontWeight {
+    font-weight: normal;
 }
 
 
