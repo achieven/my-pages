@@ -144,7 +144,7 @@ var LoginSignupPage = React.createClass({
             }
             else {
                 var data = {
-                    username: passwordSignup1,
+                    username: usernameSignup,
                     password: passwordSignup2
                 }
                 socket.emit('signup', data)
