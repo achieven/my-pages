@@ -189,9 +189,7 @@ app.get('/simplerestapi', function (req, res) {
 
     db.serialize(function () {
         var query = 'CREATE TABLE if not exists profiles (id INTEGER NOT NULL PRIMARY KEY, name varchar, bio varchar, fb_id varchar)'
-        db.run(query, function (err, response) {
-            console.log('create table:', err, response)
-        });
+        db.run(query)
     })
 
     app.get('/simplerestapi/profiles', function (req, res) {
@@ -293,38 +291,64 @@ function messengerHelper() {
         io.of('/messengerReact').on('connection', function (socket) {
             socketId = util.addSocket(socket, allClientSockets, socketId)
             socket.emit('env', process.env.NODE_ENV)
+            socket.removeAllListeners('login')
+            socket.removeAllListeners('signup')
+            socket.removeAllListeners('loginAs')
+            socket.removeAllListeners('getOnlineUsers')
+            socket.removeAllListeners('clientMessage')
+            socket.removeAllListeners('deleteCorrespondence')
+            socket.removeAllListeners('openPrivateChat')
+            socket.removeAllListeners('openGroupChat')
+
+
+
             socket.on('login', function (data) {
                 util.login(redisClient, data, function (message, param) {
+                    socket.username = param
                     socket.emit(message, param)
+                    socket.emit('addOnlineUser', socket.username)
                 })
             })
             socket.on('signup', function (data) {
                 util.signup(redisClient, data, function (message, param) {
+                    socket.username = param
                     socket.emit(message, param)
                 })
             })
+            socket.on('loginAs', function(username){
+                socket.username = username
+                socket.emit('addOnlineUser', username)
+            })
+            socket.on('getOnlineUsers', function(){
+                util.getOnlineUsers(socket, allClientSockets, function(_socket, message, param){
+                    _socket.username && _socket.emit(message, param)
+                })
+            })
             socket.on('clientMessage', function (data) {
-                util.sendMessage(socket, allClientSockets, data, function (_socket, message, param) {
+                util.sendMessage(socket, redisClient, allClientSockets, data, function (_socket, message, param) {
                     _socket.emit(message, param)
                 })
             })
-            socket.on('saveCorrespondence', function (data) {
-                util.saveChat(redisClient, data, function (message) {
-                    socket.emit(message)
+            socket.on('deleteCorrespondence', function (deleterUsername, deleteChatWith) {
+                util.deleteChat(redisClient, deleterUsername, deleteChatWith, function (message, param) {
+                    socket.emit(message, param)
                 })
             })
-            socket.on('getCorrespondence', function (username) {
-                util.showChat(socket, redisClient, username, function (message) {
-                    socket.emit(message)
+            socket.on('openPrivateChat', function(chatParticipants){
+                util.openPrivateChat(redisClient, chatParticipants, function(message, param){
+                    socket.emit(message, param)
                 })
             })
-            socket.on('deleteCorrespondence', function (username) {
-                util.deleteChat(redisClient, username, function (message, param) {
+            socket.on('openGroupChat', function(username){
+                util.openGroupChat(redisClient, username, function(message, param){
                     socket.emit(message, param)
                 })
             })
             socket.on('disconnect', function () {
                 allClientSockets = util.removeSocket(socket, allClientSockets)
+                util.getOnlineUsers(socket, allClientSockets, function(_socket, message, param){
+                    _socket.username && _socket.emit(message, param)
+                })
             })
         })
         function buildPage() {
@@ -445,9 +469,7 @@ const sqlite = require('sqlite3').verbose()
 var db = new sqlite.Database('./mywebsites/userDetails/' + process.env.NODE_ENV + '-user-details.db')
 db.serialize(function () {
     var query = 'CREATE TABLE if not exists userdata (ipUserAgent varchar NOT NULL PRIMARY KEY, ip varchar, hostname varchar, country varchar, city varchar, loc varchar, org varchar, region varchar, browserName varchar, browserVersion varchar, engineName varchar, engineVersion varchar, osName varchar, osVersion varchar, deviceModel varchar, deviceVendor varchar, deviceType varchar, cpuArchitecture varchar)'
-    db.run(query, function (err, response) {
-        console.log('create table:', err, response)
-    });
+    db.run(query)
 })
 
 app.post('/userDetails/userdata', function (req, res) {

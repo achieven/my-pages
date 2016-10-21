@@ -1,3 +1,7 @@
 .positionRelative {
     position: relative;
 }
+
+.h3VerticalMiddle {
+    margin-top: 10px;
+}

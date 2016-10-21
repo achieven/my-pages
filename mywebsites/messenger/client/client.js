@@ -5,6 +5,21 @@ const $ = require('../../.././node_modules/jquery/dist/jquery.min.js')
 var clientComponent, loginAsComponent, loginSignupComponent, chatComponent
 var Ladda = require('ladda')
 
+var setUsernameStorage = function (username) {
+    if (username) {
+        window.localStorage.setItem('chatUserName', username)
+        if (localStorage.getItem('env') === 'dev') {
+            window.sessionStorage.setItem('chatUserName', username)
+        }
+    }
+}
+var getUsernameStorage = function () {
+    if (window.localStorage.getItem('env') === 'dev') {
+        return window.sessionStorage.getItem('chatUserName')
+    }
+    return window.localStorage.getItem('chatUserName')
+}
+
 function escapeUnescapeHtml(text) {
     text = text.split('<').join('&lt')
     text = text.split('>').join('&gt')
@@ -12,9 +27,11 @@ function escapeUnescapeHtml(text) {
 }
 
 var LoginAsPage = React.createClass({
-    start: function (username) {
+    start: function () {
         $('.loginAs').removeClass('hide')
+        var username = getUsernameStorage()
         $('.yesLoginAs').on('click', function () {
+            socket.emit('loginAs', username)
             clientComponent.navigateToChatPage(username, 'loginAs')
         })
         $('.noDontLoginAs').on('click', function () {
@@ -28,7 +45,7 @@ var LoginAsPage = React.createClass({
                     <div className="row">
                         <div className="col-sm-3 col-xs-12 text-center">
                             <h3 className="alert alert-warning">Login
-                                as {window.localStorage.getItem('chatUserName')}?</h3>
+                                as {getUsernameStorage()}?</h3>
                             <div className="positionRelative">
                                 <button className="btn btn-success yesLoginAs yesButton">Yes</button>
                                 <button className="btn btn-info noDontLoginAs noButton">No</button>
@@ -50,6 +67,8 @@ var LoginAsPage = React.createClass({
 var LoginSignupPage = React.createClass({
     start: function () {
         $('.loginSignupPage').removeClass('hide')
+        loginSignupComponent.submitLoginForm();
+        loginSignupComponent.submitSignupForm();
     },
     render: function () {
         return (
@@ -97,6 +116,65 @@ var LoginSignupPage = React.createClass({
             </div>
         )
     },
+    submitLoginForm: function () {
+        $('.loginForm').on('submit', function (e) {
+            var data = {
+                username: $('.usernameLogin').val(),
+                password: $('.passwordLogin').val()
+            }
+            e.preventDefault()
+            socket.emit('login', data)
+            socket.removeAllListeners('loginSuccess')
+            socket.removeAllListeners('loginFail')
+            socket.on('loginSuccess', function (username) {
+                setUsernameStorage(username);
+                clientComponent.navigateToChatPage(username, 'loginSignup');
+            })
+            socket.on('loginFail', function () {
+                $('.loginError').removeClass('hide')
+            })
+        })
+    },
+    submitSignupForm: function () {
+        $('.signupForm').on('submit', function (e) {
+            e.preventDefault()
+            var usernameSignup = $('.usernameSignup').val()
+            var passwordSignup1 = $('.passwordSignup1').val()
+            var passwordSignup2 = $('.passwordSignup2').val()
+            if (usernameSignup.length < 8 || usernameSignup.length > 15) {
+                $('.signupError').removeClass('hide')
+                $('.signupError').text('Username must be between 8 and 15 letters')
+            }
+            else if (usernameSignup.indexOf('#') > -1) {
+                $('.signupError').removeClass('hide')
+                $('.signupError').text('Character # is not allowed in username')
+            }
+            else if (passwordSignup1 != passwordSignup2) {
+                $('.signupError').removeClass('hide')
+                $('.signupError').text('Passwords dont match')
+            }
+            else if (passwordSignup1.length < 8) {
+                $('.signupError').removeClass('hide')
+                $('.signupError').text('Password must be at least 8 characters')
+            }
+            else {
+                var data = {
+                    username: usernameSignup,
+                    password: passwordSignup2
+                }
+                socket.emit('signup', data)
+                socket.removeAllListeners('signupSuccess')
+                socket.on('signupSuccess', function (username) {
+                    setUsernameStorage(username)
+                    clientComponent.navigateToChatPage(username, 'loginSignup');
+                })
+                socket.on('signupFail', function (username) {
+                    $('.signupError').removeClass('hide')
+                    $('.signupError').text('Username ' + username + ' is not available')
+                })
+            }
+        })
+    },
     componentDidMount: function () {
         loginSignupComponent = this
     },
@@ -109,19 +187,53 @@ var MessageLine = React.createClass({
     getInitialState: function () {
         return {
             color: this.props.color || '',
-            sender: this.props.sender || '',
+            from: this.props.from || '',
             message: this.props.message || ''
         }
     },
 
     render: function () {
         var classname = "alert " + this.props.color
-        var messageText = this.props.sender + ': ' + this.props.message
+        var textInline = this.props.from + ': ' + this.props.message
         return (
             <tr>
                 <td className={classname}>
-                    <p className="messageSender">{this.props.sender}</p>
-                    <h6 className="messageText">{this.props.message}</h6>
+                    <p className="messageSender">{this.props.from}</p>
+                    <h6 className="textInline">{this.props.message}</h6>
+                </td>
+            </tr>
+        )
+    }
+})
+
+
+var OnlineUserLine = React.createClass({
+    getInitialState: function () {
+        return {
+            user: this.props.user || '',
+            button: this.props.button || '',
+            newMesages: this.props.newMessages || 0
+        }
+    },
+    render: function () {
+        var className = "textInline onlineUserBtn btn btn-" + this.props.button
+        var newMessagesLine
+        switch (this.props.newMessages) {
+            case 0:
+                newMessagesLine = ''
+                break
+            case 1:
+                newMessagesLine = '1 new message!'
+                break
+            default:
+                newMessagesLine = this.props.newMessages + ' new messages!'
+                break
+        }
+        return (
+            <tr>
+                <td className="alert alert-info">
+                    <button className={className}>{this.props.user}</button>
+                    <label className="newMessage">{newMessagesLine}</label>
                 </td>
             </tr>
         )
@@ -141,52 +253,45 @@ var ChatPage = React.createClass({
     getInitialState: function () {
         return {
             username: this.props.username || '',
-            messages: this.props.messages || []
+            otherUsername: this.props.otherUsername || '',
+            messages: this.props.messages || [],
+            onlineUsers: this.props.onlineUsers || []
         }
     },
     start: function (username) {
-        socket.emit('getCorrespondence', username)
-        socket.removeAllListeners('showCorrespondence')
-        socket.on('showCorrespondence', function (messages) {
-            chatComponent.setState({
-                messages: messages
-            })
-        })
         $('.chatPage').removeClass('hide')
+        this.setState({
+            username: username
+        })
+        this.showCorrespondence(username);
+        this.showOnlineUsers()
         this.listenToUserMessages()
-        $('.messageForm').on('submit', function (e) {
+        this.waitForMessageSubmit(username);
+        this.waitForChatDelete();
+
+    },
+    waitForMessageSubmit: function (username) {
+        var thisComponent = this
+        $('.submitMessage').on('click', function (e) {
             e.preventDefault()
             var message = $('.messageForm :input').val()
-            message && socket.emit('clientMessage', {message: message, sender: username})
+            message && socket.emit('clientMessage', {
+                message: message,
+                from: username,
+                to: thisComponent.state.otherUsername
+            })
             $('.messageForm')[0].reset()
         })
-        $('.saveCorrespondence').on('click', function (e) {
-            $('.saveCorrespondence .ladda-spinner').removeClass('hide')
-            var laddaSaveChat = Ladda.create(document.querySelector('.saveCorrespondence'))
-            laddaSaveChat.start()
-            e.preventDefault()
-            socket.emit('saveCorrespondence', {
-                username: chatComponent.state.username,
-                messages: chatComponent.state.messages
-            })
-            socket.removeAllListeners('correspondenceSaved')
-            socket.on('correspondenceSaved', function () {
-                laddaSaveChat.stop()
-                $('.saveCorrespondence').removeClass('ladda-button')
-                $('.saveCorrespondence .ladda-spinner').addClass('hide')
-                $('.chatSavedMessage').removeClass('hide')
-                setTimeout(function () {
-                    $('.chatSavedMessage').addClass('hide')
-                }, 2000)
-            })
-        })
+    },
+    waitForChatDelete: function () {
         $('.deleteCorrespondence').on('click', function (e) {
             e.preventDefault()
             chatComponent.scrollToBottom()
             $('.deleteCorrespondenceWarning').removeClass('hide')
             $('.yesDeleteCorrespondence').on('click', function (e) {
                 e.preventDefault()
-                socket.emit('deleteCorrespondence', chatComponent.state.username)
+                socket.emit('deleteCorrespondence', chatComponent.state.username, chatComponent.state.otherUsername)
+                socket.removeAllListeners('correspondenceDeleted')
                 socket.on('correspondenceDeleted', function (data) {
                     $('.deleteCorrespondenceWarning').addClass('hide')
                     chatComponent.setState({
@@ -199,8 +304,69 @@ var ChatPage = React.createClass({
                 $('.deleteCorrespondenceWarning').addClass('hide')
             })
         })
-        this.setState({
-            username: username
+    },
+    waitForPrivateChatClick: function () {
+        var thisComponent = this
+        $('.onlineUserBtn').unbind('click').click(function (e) {
+            $('.writeToEveryone').removeClass('btn-info').addClass('btn-default')
+            var userToSend = e.currentTarget.textContent
+            socket.emit('openPrivateChat', {from: getUsernameStorage(), to: userToSend})
+            socket.removeAllListeners('showPrivateChat')
+            socket.on('showPrivateChat', function (messages) {
+                chatComponent.setState({
+                    messages: messages,
+                    otherUsername: userToSend,
+                    onlineUsers: thisComponent.resetNewMessagesToUser(userToSend)
+                })
+            })
+        })
+        $('.writeToEveryone').unbind('click').click(function (e) {
+            $('.writeToEveryone').removeClass('btn-defualt').addClass('btn-info')
+            socket.emit('openGroupChat', thisComponent.state.username)
+            socket.removeAllListeners('showGroupChat')
+            socket.on('showGroupChat', function (messages) {
+                chatComponent.setState({
+                    messages: messages,
+                    otherUsername: undefined,
+                })
+            })
+        })
+    },
+    showOnlineUsers: function () {
+        socket.emit('getOnlineUsers')
+        socket.removeAllListeners('showOnlineUsers')
+        socket.on('showOnlineUsers', function (onlineUsers) {
+            var indexOfMe = onlineUsers.findIndex(function (user) {
+                return user.username === getUsernameStorage()
+            })
+            onlineUsers.splice(indexOfMe, 1)
+            var indexOfOtherUser = onlineUsers.findIndex(function (user) {
+                return user.username === chatComponent.state.otherUsername
+            })
+            if (indexOfOtherUser < 0) {
+                $('.writeToEveryone').removeClass('btn-defualt').addClass('btn-info')
+                socket.emit('openGroupChat', chatComponent.state.username)
+                socket.removeAllListeners('showGroupChat')
+                socket.on('showGroupChat', function (messages) {
+                    chatComponent.setState({
+                        messages: messages,
+                        otherUsername: undefined,
+                    })
+                })
+            }
+            chatComponent.setState({
+                onlineUsers: onlineUsers
+            })
+        })
+    },
+    showCorrespondence: function (username) {
+        socket.emit('openGroupChat', username)
+        socket.removeAllListeners('showGroupChat')
+        socket.on('showGroupChat', function (messages) {
+            chatComponent.setState({
+                messages: messages,
+                otherUsername: undefined,
+            })
         })
     },
     listenToUserMessages: function () {
@@ -208,62 +374,125 @@ var ChatPage = React.createClass({
         socket.removeAllListeners('serverMessageToOther')
         socket.removeAllListeners('serverMessageToMe')
         socket.on('serverMessageToOther', function (data) {
-            thisComponent.handleIncomingMessage(data.message, data.sender, data.socketId)
+            thisComponent.recieveMessageFromOther(data.message, data.from, data.to)
         })
         socket.on('serverMessageToMe', function (data) {
-            thisComponent.handleIncomingMessage(data.message, data.sender)
+            thisComponent.recieveMessageFromMe(data.message, data.from)
         })
     },
-    handleIncomingMessage: function (message, sender, socketId) {
-        var messages = this.updateStateWithoutRendering(message, sender, socketId)
+    recieveMessageFromOther: function (message, from, to) {
+        if (to) {
+            if (to === getUsernameStorage()) {
+                if (from === this.state.otherUsername) {
+                    var messages = this.updateMessages(message, from)
+                    this.setState({
+                        messages: messages
+                    })
+                }
+                else {
+                    var onlineUsers = this.addNewMessageToUser(from)
+                    this.setState({
+                        onlineUsers: onlineUsers
+                    })
+                }
+            }
+        }
+        else {
+            if (!(this.state.otherUsername)) {
+                var messages = this.updateMessages(message, from)
+                this.setState({
+                    messages: messages
+                })
+            }
+        }
+    },
+    recieveMessageFromMe: function (message, from) {
+        var messages = this.updateMessages(message, from)
         this.setState({
             messages: messages
         })
     },
-    updateStateWithoutRendering: function (message, sender, socketId) {
+    updateMessages: function (message, from) {
         var messages = this.state.messages
-        messages.push({message: message, sender: sender, socketId: socketId})
+        messages.push({message: message, from: from})
         return messages
+    },
+    addNewMessageToUser: function (from) {
+        var thisComponent = this
+        var onlineUsers = this.state.onlineUsers
+        onlineUsers.forEach(function (user) {
+            if (from === user.username) {
+                user.newMessages++
+            }
+        })
+        return onlineUsers
+    },
+    resetNewMessagesToUser: function (from) {
+        var thisComponent = this
+        var onlineUsers = this.state.onlineUsers
+        onlineUsers.forEach(function (user) {
+            if (from === user.username) {
+                user.newMessages = 0
+            }
+        })
+        return onlineUsers
     },
     buildMessagesToRender: function () {
         var messagesDomElements = []
         this.state.messages.forEach(function (data) {
-            var color, sender
-            if(window.localStorage.getItem('env') === 'dev'){
-                color = data.sender === window.sessionStorage.getItem('chatUserName') ? chatComponent.colors.me : chatComponent.colors.others[(data.socketId) % (chatComponent.colors.others.length)]
-                sender = data.sender === window.sessionStorage.getItem('chatUserName') ? '' : data.sender
+            var color, from
+            if (window.localStorage.getItem('env') === 'dev') {
+                color = data.from === window.sessionStorage.getItem('chatUserName') ? chatComponent.colors.me : chatComponent.colors.others[(data.socketId) % (chatComponent.colors.others.length)]
+                from = data.from === window.sessionStorage.getItem('chatUserName') ? '' : data.from
             }
             else {
-                color = data.sender === window.localStorage.getItem('chatUserName') ? chatComponent.colors.me : chatComponent.colors.others[(data.socketId) % (chatComponent.colors.others.length)]
-                sender = data.sender === window.localStorage.getItem('chatUserName') ? '' : data.sender
+                color = data.from === window.localStorage.getItem('chatUserName') ? chatComponent.colors.me : chatComponent.colors.others[(data.socketId) % (chatComponent.colors.others.length)]
+                from = data.from === window.localStorage.getItem('chatUserName') ? '' : data.from
             }
 
             messagesDomElements.push(
-                <MessageLine key={chatComponent.messageKey++} message={data.message} sender={sender}
+                <MessageLine key={chatComponent.messageKey++} message={data.message} from={from}
                              color={color}></MessageLine>
             )
         })
         return messagesDomElements
     },
+    buildOnlineUsersToRender: function () {
+        var onlineUsersDomElements = []
+        var onlineUserKey = 0
+        this.state.onlineUsers.forEach(function (user) {
+            if (!chatComponent) {
+                onlineUsersDomElements.push(<OnlineUserLine key={onlineUserKey++} user={user.username}
+                                                            button="default"
+                                                            newMessages={user.newMessages}></OnlineUserLine>)
+            }
+            else if (chatComponent.state.otherUsername === user.username) {
+                onlineUsersDomElements.push(<OnlineUserLine key={onlineUserKey++} user={user.username}
+                                                            button="info"
+                                                            newMessages={user.newMessages}></OnlineUserLine>)
+            }
+            else {
+                onlineUsersDomElements.push(<OnlineUserLine key={onlineUserKey++} user={user.username}
+                                                            button="default"
+                                                            newMessages={user.newMessages}></OnlineUserLine>)
+            }
+        })
+        return onlineUsersDomElements.length > 0 ? onlineUsersDomElements : undefined
+    },
     render: function () {
         var messages = this.buildMessagesToRender()
+        var onlineUsers = this.buildOnlineUsersToRender()
         return (
             <div className="chatPage hide">
                 <div className="chatTop">
                     <div className="container">
                         <div className="row">
                             <div className="col-sm-8 col-xs-4">
-                                <h3 className="helloUsername">Hello {this.state.username}!</h3>
+                                <h3 className="h3VerticalMiddle">Hello {this.state.username}!</h3>
                             </div>
                             <div className="col-sm-4 col-xs-8">
                                 <div className="row">
                                     <div className="col-xs-6">
-                                        <button className="btn btn-info col-xs-12 saveCorrespondence"
-                                                data-style="zoom-in" type='submit'>
-                                            <span className="ladda-label">Save Chat</span>
-                                            <span className="ladda-spinner"></span>
-                                        </button>
-                                        <h5 className="chatSavedMessage text-center hide">Chat Saved!</h5>
                                     </div>
                                     <div className="col-xs-6">
                                         <button className="btn btn-danger col-xs-12 deleteCorrespondence">Delete
@@ -289,17 +518,35 @@ var ChatPage = React.createClass({
                     </div>
                 </div>
                 <div className="chatBody">
-                    <div className="positionRelative">
-
-                        <div className="container">
-                            <div className="row">
-                                <div className="col-sm-10 col-xs-8">
-                                    <table className="table">
-                                        <tbody>
-                                        {messages || []}
-                                        </tbody>
-                                    </table>
-                                </div>
+                    <div className="container">
+                        <div className="row">
+                            <div className="col-xs-2">
+                                <table className="table">
+                                    <thead>
+                                    <tr>
+                                        <th>
+                                            <button className="writeToEveryone btn btn-info">Write to
+                                                everyone
+                                            </button>
+                                            <div className="text-center">Or</div>
+                                            <div className="text-center tableThReduceFontWeight">Contact online users:
+                                            </div>
+                                        </th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    {onlineUsers || <tr>
+                                        <td>No users online</td>
+                                    </tr>}
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div className="col-sm-8 col-xs-6">
+                                <table className="table">
+                                    <tbody>
+                                    {messages || []}
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
                     </div>
@@ -326,10 +573,10 @@ var ChatPage = React.createClass({
     scrollToBottom: function () {
         var chatBody = document.querySelector('.chatBody')
         chatBody.scrollTop = chatBody.scrollHeight;
-
     },
     componentDidUpdate: function () {
         chatComponent.scrollToBottom()
+        chatComponent.waitForPrivateChatClick()
     },
     componentDidMount: function () {
         chatComponent = this
@@ -337,20 +584,6 @@ var ChatPage = React.createClass({
 })
 
 var Client = React.createClass({
-    start: function () {
-        $('.loadingMessage').addClass('hide')
-        socket.removeAllListeners('env')
-        socket.on('env', function(env){
-            window.localStorage.setItem('env', env)
-        })
-        var storageUsername = window.localStorage.getItem('chatUserName')
-        if (storageUsername) {
-            clientComponent.navigateToLoginAsPage(storageUsername)
-        }
-        else {
-            clientComponent.navigateToLoginSignupPage()
-        }
-    },
     render: function () {
         return (
             <div>
@@ -368,8 +601,25 @@ var Client = React.createClass({
             </div>
         )
     },
-    navigateToLoginAsPage: function (username) {
-        loginAsComponent.start(username)
+    start: function () {
+        $('.loadingMessage').addClass('hide')
+        clientComponent.adjustElementsToDeviceType();
+        clientComponent.sendUserDetails();
+        socket.removeAllListeners('env')
+        socket.on('env', function (env) {
+            window.localStorage.setItem('env', env)
+        })
+        var storageUsername = getUsernameStorage()
+        if (storageUsername) {
+            clientComponent.navigateToLoginAsPage()
+        }
+        else {
+            clientComponent.navigateToLoginSignupPage()
+        }
+
+    },
+    navigateToLoginAsPage: function () {
+        loginAsComponent.start()
     },
     navigateToLoginSignupPage: function () {
         loginAsComponent.finish()
@@ -388,100 +638,45 @@ var Client = React.createClass({
         }
         chatComponent.start(username)
     },
-    setUsernameStorage: function (username) {
-        if (username) {
-            window.localStorage.setItem('chatUserName', username)
-            if (localStorage.getItem('env') === 'dev') {
-                window.sessionStorage.setItem('chatUserName', username)
-            }
+    adjustElementsToDeviceType: function () {
+        var deviceInputClass, deviceButtonClass
+        if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+            deviceInputClass = 'lg'
+            deviceButtonClass = 'lg'
         }
+        else {
+            deviceInputClass = 'xs'
+            deviceButtonClass = 'md'
+        }
+        $('button').addClass('btn-' + deviceButtonClass)
+        $('input').addClass('input-' + deviceInputClass)
+
+        $('.deleteCorrespondence').removeClass('btn-lg')
+        $('.yesDeleteCorrespondence').removeClass('btn-lg')
+        $('.noDontDeleteCorrespondence').removeClass('btn-lg')
+    },
+    sendUserDetails: function () {
+        $.get("http://ipinfo.io", function (response) {
+            var data = {
+                ipAddress: response.ip,
+                hostname: response.hostname,
+                country: response.country,
+                city: response.city,
+                loc: response.loc,
+                org: response.org,
+                region: response.region
+            }
+            $.ajax({
+                type: 'post',
+                url: '/userDetails/userdata',
+                data: JSON.stringify(data),
+                contentType: 'application/json'
+            })
+        }, "jsonp")
     },
     componentDidMount: function () {
         clientComponent = this
         clientComponent.start()
-
-        function adjustElementsToDeviceType() {
-            var deviceInputClass, deviceButtonClass
-            if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
-                deviceInputClass = 'lg'
-                deviceButtonClass = 'lg'
-            }
-            else {
-                deviceInputClass = 'xs'
-                deviceButtonClass = 'md'
-            }
-            $('button').addClass('btn-' + deviceButtonClass)
-            $('input').addClass('input-' + deviceInputClass)
-            $('.saveCorrespondence').removeClass('btn-lg')
-            $('.deleteCorrespondence').removeClass('btn-lg')
-            $('.yesDeleteCorrespondence').removeClass('btn-lg')
-            $('.noDontDeleteCorrespondence').removeClass('btn-lg')
-        }
-
-        function sendUserDetails() {
-            $.get("http://ipinfo.io", function (response) {
-                var data = {
-                    ipAddress: response.ip,
-                    hostname: response.hostname,
-                    country: response.country,
-                    city: response.city,
-                    loc: response.loc,
-                    org: response.org,
-                    region: response.region
-                }
-                $.ajax({
-                    type: 'post',
-                    url: '/userDetails/userdata',
-                    data: JSON.stringify(data),
-                    contentType: 'application/json'
-                })
-            }, "jsonp")
-        }
-
-        adjustElementsToDeviceType();
-        sendUserDetails();
-
-        $('.loginForm').on('submit', function (e) {
-            var data = {
-                username: $('.usernameLogin').val(),
-                password: $('.passwordLogin').val()
-            }
-            e.preventDefault()
-            socket.emit('login', data)
-            socket.removeAllListeners('loginSuccess')
-            socket.removeAllListeners('loginFail')
-            socket.on('loginSuccess', function (username) {
-                clientComponent.setUsernameStorage(username);
-                clientComponent.navigateToChatPage(username, 'loginSignup');
-            })
-            socket.on('loginFail', function () {
-                $('.loginError').removeClass('hide')
-            })
-        })
-        $('.signupForm').on('submit', function (e) {
-            e.preventDefault()
-            if ($('.passwordSignup1').val() != $('.passwordSignup2').val()) {
-                $('.signupError').removeClass('hide')
-                $('.signupError').text('Passwords dont match')
-            }
-            else {
-                var data = {
-                    username: $('.usernameSignup').val(),
-                    password: $('.passwordSignup1').val()
-                }
-                socket.emit('signup', data)
-                socket.removeAllListeners('signupSuccess')
-                socket.on('signupSuccess', function (username) {
-                    clientComponent.setUsernameStorage(username)
-                    clientComponent.navigateToChatPage(username, 'loginSignup');
-                })
-                socket.on('signupFail', function (username) {
-                    $('.signupError').removeClass('hide')
-                    $('.signupError').text('Username ' + username + ' is not available')
-                })
-            }
-        })
-
     }
 })
 

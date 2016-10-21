@@ -2,13 +2,9 @@
     font-weight: bold;
 }
 
-.messageText {
+.textInline {
     display: inline;
     word-wrap: break-word;
-}
-
-.helloUsername {
-    margin-top: 10px;
 }
 
 .chatTop {
@@ -57,6 +53,14 @@
 
 .loginAs {
     padding-top: 10px;
+}
+
+.tableThReduceFontWeight {
+    font-weight: normal;
+}
+
+.writeToEveryone {
+    white-space: normal;
 }
 
 

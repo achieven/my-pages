@@ -74,25 +74,8 @@ describe('signup', function(){
     })
 })
 
-describe('sendMessage', function(){
-    it('should send message to me if socketId is same and to other if socketId is different', function(){
-        var allClientSockets = [
-            {socketId: 1},
-            {socketId: 2}
-        ]
-        var socket = {socketId: 1}
-        var data = {}
-        util.sendMessage(socket,allClientSockets,data, function(_socket, message, param){
-            if(_socket.socketId ===1){
-                expect(message).to.be.equal('serverMessageToMe')
-                expect(param).to.eql({socketId: 1})
-            }
-            if(_socket.socketId ===2){
-                expect(message).to.be.equal('serverMessageToOther')
-                expect(param).to.eql({socketId: 1})
-            }
-        })
-    })
+describe('getOnlineUsers', function(){
+    
 })
 
 describe('removeSocket', function(){
@@ -107,3 +90,5 @@ describe('removeSocket', function(){
         expect(allClientSockets[0]).to.eql({socketId: 2})
     })
 })
+
+describe('')
