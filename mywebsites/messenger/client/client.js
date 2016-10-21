@@ -5,6 +5,21 @@ const $ = require('../../.././node_modules/jquery/dist/jquery.min.js')
 var clientComponent, loginAsComponent, loginSignupComponent, chatComponent
 var Ladda = require('ladda')
 
+var setUsernameStorage = function (username) {
+    if (username) {
+        window.localStorage.setItem('chatUserName', username)
+        if (localStorage.getItem('env') === 'dev') {
+            window.sessionStorage.setItem('chatUserName', username)
+        }
+    }
+}
+var getUsernameStorage = function () {
+    if (window.localStorage.getItem('env') === 'dev') {
+        return window.sessionStorage.getItem('chatUserName')
+    }
+    return window.localStorage.getItem('chatUserName')
+}
+
 function escapeUnescapeHtml(text) {
     text = text.split('<').join('&lt')
     text = text.split('>').join('&gt')
@@ -12,11 +27,11 @@ function escapeUnescapeHtml(text) {
 }
 
 var LoginAsPage = React.createClass({
-    start: function (username) {
+    start: function () {
         $('.loginAs').removeClass('hide')
+        var username = getUsernameStorage()
         $('.yesLoginAs').on('click', function () {
             socket.emit('loginAs', username)
-            clientComponent.setUsernameStorage(username);
             clientComponent.navigateToChatPage(username, 'loginAs')
         })
         $('.noDontLoginAs').on('click', function () {
@@ -30,7 +45,7 @@ var LoginAsPage = React.createClass({
                     <div className="row">
                         <div className="col-sm-3 col-xs-12 text-center">
                             <h3 className="alert alert-warning">Login
-                                as {window.localStorage.getItem('chatUserName')}?</h3>
+                                as {getUsernameStorage()}?</h3>
                             <div className="positionRelative">
                                 <button className="btn btn-success yesLoginAs yesButton">Yes</button>
                                 <button className="btn btn-info noDontLoginAs noButton">No</button>
@@ -112,7 +127,7 @@ var LoginSignupPage = React.createClass({
             socket.removeAllListeners('loginSuccess')
             socket.removeAllListeners('loginFail')
             socket.on('loginSuccess', function (username) {
-                clientComponent.setUsernameStorage(username);
+                setUsernameStorage(username);
                 clientComponent.navigateToChatPage(username, 'loginSignup');
             })
             socket.on('loginFail', function () {
@@ -150,7 +165,7 @@ var LoginSignupPage = React.createClass({
                 socket.emit('signup', data)
                 socket.removeAllListeners('signupSuccess')
                 socket.on('signupSuccess', function (username) {
-                    clientComponent.setUsernameStorage(username)
+                    setUsernameStorage(username)
                     clientComponent.navigateToChatPage(username, 'loginSignup');
                 })
                 socket.on('signupFail', function (username) {
@@ -295,7 +310,7 @@ var ChatPage = React.createClass({
         $('.onlineUserBtn').unbind('click').click(function (e) {
             $('.writeToEveryone').removeClass('btn-info').addClass('btn-default')
             var userToSend = e.currentTarget.textContent
-            socket.emit('openPrivateChat', {from: clientComponent.getUsernameStorage(), to: userToSend})
+            socket.emit('openPrivateChat', {from: getUsernameStorage(), to: userToSend})
             socket.removeAllListeners('showPrivateChat')
             socket.on('showPrivateChat', function (messages) {
                 chatComponent.setState({
@@ -322,7 +337,7 @@ var ChatPage = React.createClass({
         socket.removeAllListeners('showOnlineUsers')
         socket.on('showOnlineUsers', function (onlineUsers) {
             var indexOfMe = onlineUsers.findIndex(function (user) {
-                return user.username === clientComponent.getUsernameStorage()
+                return user.username === getUsernameStorage()
             })
             onlineUsers.splice(indexOfMe, 1)
             chatComponent.setState({
@@ -353,7 +368,7 @@ var ChatPage = React.createClass({
     },
     recieveMessageFromOther: function (message, from, to) {
         if (to) {
-            if (to === clientComponent.getUsernameStorage()) {
+            if (to === getUsernameStorage()) {
                 if (from === this.state.otherUsername) {
                     var messages = this.updateMessages(message, from)
                     this.setState({
@@ -581,17 +596,17 @@ var Client = React.createClass({
         socket.on('env', function (env) {
             window.localStorage.setItem('env', env)
         })
-        var storageUsername = window.localStorage.getItem('chatUserName')
+        var storageUsername = getUsernameStorage()
         if (storageUsername) {
-            clientComponent.navigateToLoginAsPage(storageUsername)
+            clientComponent.navigateToLoginAsPage()
         }
         else {
             clientComponent.navigateToLoginSignupPage()
         }
 
     },
-    navigateToLoginAsPage: function (username) {
-        loginAsComponent.start(username)
+    navigateToLoginAsPage: function () {
+        loginAsComponent.start()
     },
     navigateToLoginSignupPage: function () {
         loginAsComponent.finish()
@@ -609,20 +624,6 @@ var Client = React.createClass({
                 break
         }
         chatComponent.start(username)
-    },
-    setUsernameStorage: function (username) {
-        if (username) {
-            window.localStorage.setItem('chatUserName', username)
-            if (localStorage.getItem('env') === 'dev') {
-                window.sessionStorage.setItem('chatUserName', username)
-            }
-        }
-    },
-    getUsernameStorage: function () {
-        if (window.localStorage.getItem('env') === 'dev') {
-            return window.sessionStorage.getItem('chatUserName')
-        }
-        return window.localStorage.getItem('chatUserName')
     },
     adjustElementsToDeviceType: function () {
         var deviceInputClass, deviceButtonClass

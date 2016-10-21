@@ -189,9 +189,7 @@ app.get('/simplerestapi', function (req, res) {
 
     db.serialize(function () {
         var query = 'CREATE TABLE if not exists profiles (id INTEGER NOT NULL PRIMARY KEY, name varchar, bio varchar, fb_id varchar)'
-        db.run(query, function (err, response) {
-            console.log('create table:', err, response)
-        });
+        db.run(query)
     })
 
     app.get('/simplerestapi/profiles', function (req, res) {
@@ -313,7 +311,6 @@ function messengerHelper() {
             })
             socket.on('signup', function (data) {
                 util.signup(redisClient, data, function (message, param) {
-                    console.log(message, param)
                     socket.username = param
                     socket.emit(message, param)
                 })
@@ -348,9 +345,10 @@ function messengerHelper() {
                 })
             })
             socket.on('disconnect', function () {
-                console.log('disconnecting', socket.username)
-                socket.emit('removeOnlineUser', socket.username)
                 allClientSockets = util.removeSocket(socket, allClientSockets)
+                util.getOnlineUsers(socket, allClientSockets, function(_socket, message, param){
+                    _socket.username && _socket.emit(message, param)
+                })
             })
         })
         function buildPage() {
@@ -471,9 +469,7 @@ const sqlite = require('sqlite3').verbose()
 var db = new sqlite.Database('./mywebsites/userDetails/' + process.env.NODE_ENV + '-user-details.db')
 db.serialize(function () {
     var query = 'CREATE TABLE if not exists userdata (ipUserAgent varchar NOT NULL PRIMARY KEY, ip varchar, hostname varchar, country varchar, city varchar, loc varchar, org varchar, region varchar, browserName varchar, browserVersion varchar, engineName varchar, engineVersion varchar, osName varchar, osVersion varchar, deviceModel varchar, deviceVendor varchar, deviceType varchar, cpuArchitecture varchar)'
-    db.run(query, function (err, response) {
-        console.log('create table:', err, response)
-    });
+    db.run(query)
 })
 
 app.post('/userDetails/userdata', function (req, res) {

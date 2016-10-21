@@ -117,7 +117,7 @@ var util = {
                     })
                 }
                 else {
-                    redisClient.set(query, JSON.stringify([{message: data.message, sender: data.from}]))
+                    redisClient.set(query, JSON.stringify([{message: data.message, from: data.from}]))
                 }
             })
         }
@@ -154,7 +154,7 @@ var util = {
             callback('correspondenceDeleted')
         })
     },
-    removeSocket(socket, allClientSockets){
+    removeSocket: function(socket, allClientSockets){
         allClientSockets = allClientSockets.filter(function (_socket) {
             return socket.socketId != _socket.socketId
         })
