@@ -268,7 +268,7 @@ var ChatPage = React.createClass({
         this.listenToUserMessages()
         this.waitForMessageSubmit(username);
         this.waitForChatDelete();
-        
+
     },
     waitForMessageSubmit: function (username) {
         var thisComponent = this
@@ -324,7 +324,7 @@ var ChatPage = React.createClass({
             $('.writeToEveryone').removeClass('btn-defualt').addClass('btn-info')
             socket.emit('openGroupChat', thisComponent.state.username)
             socket.removeAllListeners('showGroupChat')
-            socket.on('showGroupChat', function(messages){
+            socket.on('showGroupChat', function (messages) {
                 chatComponent.setState({
                     messages: messages,
                     otherUsername: undefined,
@@ -340,6 +340,20 @@ var ChatPage = React.createClass({
                 return user.username === getUsernameStorage()
             })
             onlineUsers.splice(indexOfMe, 1)
+            var indexOfOtherUser = onlineUsers.findIndex(function (user) {
+                return user.username === chatComponent.state.otherUsername
+            })
+            if (indexOfOtherUser < 0) {
+                $('.writeToEveryone').removeClass('btn-defualt').addClass('btn-info')
+                socket.emit('openGroupChat', chatComponent.state.username)
+                socket.removeAllListeners('showGroupChat')
+                socket.on('showGroupChat', function (messages) {
+                    chatComponent.setState({
+                        messages: messages,
+                        otherUsername: undefined,
+                    })
+                })
+            }
             chatComponent.setState({
                 onlineUsers: onlineUsers
             })
@@ -348,7 +362,7 @@ var ChatPage = React.createClass({
     showCorrespondence: function (username) {
         socket.emit('openGroupChat', username)
         socket.removeAllListeners('showGroupChat')
-        socket.on('showGroupChat', function(messages){
+        socket.on('showGroupChat', function (messages) {
             chatComponent.setState({
                 messages: messages,
                 otherUsername: undefined,
@@ -384,7 +398,7 @@ var ChatPage = React.createClass({
             }
         }
         else {
-            if(!(this.state.otherUsername)){
+            if (!(this.state.otherUsername)) {
                 var messages = this.updateMessages(message, from)
                 this.setState({
                     messages: messages
@@ -413,7 +427,7 @@ var ChatPage = React.createClass({
         })
         return onlineUsers
     },
-    resetNewMessagesToUser: function(from){
+    resetNewMessagesToUser: function (from) {
         var thisComponent = this
         var onlineUsers = this.state.onlineUsers
         onlineUsers.forEach(function (user) {
@@ -511,13 +525,12 @@ var ChatPage = React.createClass({
                                     <thead>
                                     <tr>
                                         <th>
-                                            <div className="row">
-                                                <button className="col-xs-12 writeToEveryone btn btn-info">Write to
-                                                    everyone
-                                                </button>
+                                            <button className="writeToEveryone btn btn-info">Write to
+                                                everyone
+                                            </button>
+                                            <div className="text-center">Or</div>
+                                            <div className="text-center tableThReduceFontWeight">Contact online users:
                                             </div>
-                                            <div className="row text-center">Or</div>
-                                            <div className="row text-center tableThReduceFontWeight">Contact online users:</div>
                                         </th>
                                     </tr>
                                     </thead>
