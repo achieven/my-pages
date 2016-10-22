@@ -42,7 +42,7 @@ var util = {
             }
         })
     },
-    getOnlineUsers: function (socket, allClientSockets, callback) {
+    getOnlineUsers: function (allClientSockets, callback) {
         var onlineUsers = []
         allClientSockets.forEach(function (_socket) {
             _socket.username && onlineUsers.push({username: _socket.username, newMessages: 0})
@@ -53,7 +53,7 @@ var util = {
 
     },
     openPrivateChat: function (redisClient, chatParticipants, callback) {
-        var privateChatInDB = process.env.NODE_ENV + 'privateChat' + chatParticipants.from + '#' + chatParticipants.to
+        var privateChatInDB = redisEnv + 'privateChat' + chatParticipants.from + '#' + chatParticipants.to
         redisClient.exists(privateChatInDB, function (err, reply) {
             if (reply === 1) {
                 redisClient.get(privateChatInDB, function (err, messages) {
@@ -68,7 +68,7 @@ var util = {
         })
     },
     openGroupChat: function (redisClient, username, callback) {
-        var groupChatInDB = process.env.NODE_ENV + 'groupChat' + username
+        var groupChatInDB = redisEnv + 'groupChat' + username
         redisClient.exists(groupChatInDB, function (err, reply) {
             if (reply === 1) {
                 redisClient.get(groupChatInDB, function (err, messages) {
@@ -81,7 +81,6 @@ var util = {
                 })
             }
         })
-
     },
     sendMessage: function (socket, redisClient, allClientSockets, data, callback) {
         data.socketId = socket.socketId
@@ -109,11 +108,13 @@ var util = {
             redisClient.exists(query, function (err, reply) {
                 if (reply === 1) {
                     redisClient.get(query, function (err, messages) {
-                        var commaForFirstMessage = JSON.parse(messages).length > 0 ? ',' : ''
-                        redisClient.set(query, messages.replace(']', '') + commaForFirstMessage + JSON.stringify({
-                                message: data.message,
-                                from: data.from
-                            }) + ']')
+                        var messagesArray = JSON.parse(messages)
+                        messagesArray.push({
+                            message: data.message,
+                            from: data.from
+                        })
+                        var messagesAfterAddition = JSON.stringify(messagesArray) 
+                        redisClient.set(query, messagesAfterAddition)
                     })
                 }
                 else {
@@ -124,11 +125,21 @@ var util = {
 
 
         allClientSockets.forEach(function (_socket) {
-            if (socket.socketId != _socket.socketId) {
-                callback(_socket, 'serverMessageToOther', data)
+            if(privateMessage){
+                if(_socket.username === data.to){
+                    callback(_socket, 'serverMessageToOther', data)
+                }
+                else if(_socket.username === data.from){
+                    callback(_socket, 'serverMessageToMe', data)
+                }
             }
             else {
-                callback(_socket, 'serverMessageToMe', data)
+                if(_socket.username === data.from){
+                    callback(_socket, 'serverMessageToMe', data)
+                }
+                else {
+                    callback(_socket, 'serverMessageToOther', data)
+                }
             }
         })
     },

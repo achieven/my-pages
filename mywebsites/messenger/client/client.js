@@ -292,7 +292,7 @@ var ChatPage = React.createClass({
                 e.preventDefault()
                 socket.emit('deleteCorrespondence', chatComponent.state.username, chatComponent.state.otherUsername)
                 socket.removeAllListeners('correspondenceDeleted')
-                socket.on('correspondenceDeleted', function (data) {
+                socket.on('correspondenceDeleted', function () {
                     $('.deleteCorrespondenceWarning').addClass('hide')
                     chatComponent.setState({
                         messages: []
