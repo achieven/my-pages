@@ -149,13 +149,13 @@ var LoginSignupPage = React.createClass({
                 $('.signupError').removeClass('hide')
                 $('.signupError').text('Character # is not allowed in username')
             }
-            else if (passwordSignup1 != passwordSignup2) {
-                $('.signupError').removeClass('hide')
-                $('.signupError').text('Passwords dont match')
-            }
             else if (passwordSignup1.length < 8) {
                 $('.signupError').removeClass('hide')
                 $('.signupError').text('Password must be at least 8 characters')
+            }
+            else if (passwordSignup1 != passwordSignup2) {
+                $('.signupError').removeClass('hide')
+                $('.signupError').text('Passwords dont match')
             }
             else {
                 var data = {

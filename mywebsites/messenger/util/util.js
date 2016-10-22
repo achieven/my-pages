@@ -100,7 +100,7 @@ var util = {
             privateOrGroupChat = 'groupChat'
             allClientSockets.forEach(function (_socket) {
                 var query = redisEnv + privateOrGroupChat + _socket.username
-                addMessageToDB(query)
+                _socket.username && addMessageToDB(query)
             })
         }
 
