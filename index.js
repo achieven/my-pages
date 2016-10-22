@@ -26,7 +26,7 @@ app.use(bodyParser.urlencoded({extended: true}));
 app.get('/', function (req, res, next) {
     var projects = [
         {name: 'Messenger', link: '/messengerReact', tools: 'react, redis, socket.io, localStorage'},
-        {name: 'User Details', link: '/userDetails', tools: 'sqlite, userAgent, ipinfo'},
+        {name: 'User Details', link: '/userDetails', tools: 'sqlite, userAgent, chartist.js'},
         {name: 'Simple Rest Api', link: '/simplerestapi', tools: 'sqlite'},
         {name: 'Emitter', link: '/emitter', tools: 'react, socket.io'},
         {name: 'Digital Wallet', link: '/backend', tools: 'colu sdk, async.js'}
@@ -320,7 +320,7 @@ function messengerHelper() {
                 socket.emit('addOnlineUser', username)
             })
             socket.on('getOnlineUsers', function(){
-                util.getOnlineUsers(socket, allClientSockets, function(_socket, message, param){
+                util.getOnlineUsers(allClientSockets, function(_socket, message, param){
                     _socket.username && _socket.emit(message, param)
                 })
             })
@@ -330,8 +330,8 @@ function messengerHelper() {
                 })
             })
             socket.on('deleteCorrespondence', function (deleterUsername, deleteChatWith) {
-                util.deleteChat(redisClient, deleterUsername, deleteChatWith, function (message, param) {
-                    socket.emit(message, param)
+                util.deleteChat(redisClient, deleterUsername, deleteChatWith, function (message) {
+                    socket.emit(message)
                 })
             })
             socket.on('openPrivateChat', function(chatParticipants){
@@ -346,7 +346,7 @@ function messengerHelper() {
             })
             socket.on('disconnect', function () {
                 allClientSockets = util.removeSocket(socket, allClientSockets)
-                util.getOnlineUsers(socket, allClientSockets, function(_socket, message, param){
+                util.getOnlineUsers(allClientSockets, function(_socket, message, param){
                     _socket.username && _socket.emit(message, param)
                 })
             })

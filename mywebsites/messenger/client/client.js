@@ -149,13 +149,13 @@ var LoginSignupPage = React.createClass({
                 $('.signupError').removeClass('hide')
                 $('.signupError').text('Character # is not allowed in username')
             }
-            else if (passwordSignup1 != passwordSignup2) {
-                $('.signupError').removeClass('hide')
-                $('.signupError').text('Passwords dont match')
-            }
             else if (passwordSignup1.length < 8) {
                 $('.signupError').removeClass('hide')
                 $('.signupError').text('Password must be at least 8 characters')
+            }
+            else if (passwordSignup1 != passwordSignup2) {
+                $('.signupError').removeClass('hide')
+                $('.signupError').text('Passwords dont match')
             }
             else {
                 var data = {
@@ -292,7 +292,7 @@ var ChatPage = React.createClass({
                 e.preventDefault()
                 socket.emit('deleteCorrespondence', chatComponent.state.username, chatComponent.state.otherUsername)
                 socket.removeAllListeners('correspondenceDeleted')
-                socket.on('correspondenceDeleted', function (data) {
+                socket.on('correspondenceDeleted', function () {
                     $('.deleteCorrespondenceWarning').addClass('hide')
                     chatComponent.setState({
                         messages: []
