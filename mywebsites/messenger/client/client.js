@@ -674,9 +674,16 @@ var Client = React.createClass({
             })
         }, "jsonp")
     },
+    mockSslCertificate: function () {
+        socket.emit('canITrustYou?')
+        socket.on('yesTrustMe', function () {
+            clientComponent.start()
+        })
+    },
     componentDidMount: function () {
         clientComponent = this
-        clientComponent.start()
+        this.mockSslCertificate();
+
     }
 })
 

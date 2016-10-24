@@ -291,28 +291,35 @@ function messengerHelper() {
         io.of('/messengerReact').on('connection', function (socket) {
             socketId = util.addSocket(socket, allClientSockets, socketId)
             socket.emit('env', process.env.NODE_ENV)
-            socket.removeAllListeners('login')
             socket.removeAllListeners('signup')
+            socket.removeAllListeners('login')
             socket.removeAllListeners('loginAs')
             socket.removeAllListeners('getOnlineUsers')
             socket.removeAllListeners('clientMessage')
             socket.removeAllListeners('deleteCorrespondence')
             socket.removeAllListeners('openPrivateChat')
             socket.removeAllListeners('openGroupChat')
+            
 
 
-
+            function mockSslCertificate() {
+                socket.removeAllListeners('canITrustYou?')
+                socket.on('canITrustYou?', function () {
+                    socket.emit('yesTrustMe')
+                })
+            }
+            mockSslCertificate();
+            socket.on('signup', function (data) {
+                util.signup(redisClient, data, function (message, param) {
+                    socket.username = param
+                    socket.emit(message, param)
+                })
+            })
             socket.on('login', function (data) {
                 util.login(redisClient, data, function (message, param) {
                     socket.username = param
                     socket.emit(message, param)
                     socket.emit('addOnlineUser', socket.username)
-                })
-            })
-            socket.on('signup', function (data) {
-                util.signup(redisClient, data, function (message, param) {
-                    socket.username = param
-                    socket.emit(message, param)
                 })
             })
             socket.on('loginAs', function(username){
@@ -505,4 +512,11 @@ app.post('/userDetails/userdata', function (req, res) {
         }
     })
 })
+
+app.get('/error', function(req,res){
+    var html = Handlebars.compile(fs.readFileSync('./error.html', 'utf8'))();
+    res.send(html)
+})
+
+
 
