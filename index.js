@@ -25,7 +25,7 @@ app.use(bodyParser.urlencoded({extended: true}));
 
 app.get('/', function (req, res, next) {
     var projects = [
-        {name: 'Messenger', link: '/messengerReact', tools: 'react, redis, socket.io, localStorage'},
+        {name: 'Messenger', link: '/messengerReact', tools: 'react, redis, socket.io, localStorage, salt + sha256 hashing'},
         {name: 'User Details', link: '/userDetails', tools: 'sqlite, userAgent, chartist.js'},
         {name: 'Simple Rest Api', link: '/simplerestapi', tools: 'sqlite'},
         {name: 'Emitter', link: '/emitter', tools: 'react, socket.io'},

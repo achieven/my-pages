@@ -1,5 +1,5 @@
 var redisEnv = process.env.NODE_ENV
-var sha256 = require('sha.js')('sha256')
+var sha256 = require('js-sha256').sha256
 
 var util = {
     addSocket: function (socket, allClientSockets, socketId) {
@@ -9,65 +9,63 @@ var util = {
         return socketId
 
     },
-    generateSaltAndStoreIt: function(redisClient,username, mainCallback){
-
-        function generateSalt(){
-            var saltLength = 64
-            var salt = ''
-            var alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()-=_+`~,<.>/?;:'
-            for(var i=0;i<saltLength;i++){
-                var randomIndex = Math.floor(Math.random() * alphabet.length)
-                var randomChar = alphabet.charAt(randomIndex)
-                salt+=randomChar
-            }
-            return salt
+    generateSalt: function(){
+        var saltLength = 64
+        var salt = ''
+        var alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()-=_+`~,<.>/?;:'
+        for(var i=0;i<saltLength;i++){
+            var randomIndex = Math.floor(Math.random() * alphabet.length)
+            var randomChar = alphabet.charAt(randomIndex)
+            salt+=randomChar
         }
-
-        function checkSaltAvailability(mySalt, callback){
-            var saltQuery = redisEnv + 'salt' + mySalt
-            redisClient.exists(saltQuery, function(err, reply){
-                if(reply === 1){
-                    callback('salt already exists')
-                }
-                else {
-                    callback(null, mySalt)
-                }
-            })
-        }
-
-        function storeSalt(mySalt, callback){
-            var saltQuery = redisEnv + 'salt' + mySalt
-            var saltUsernameQuery = redisEnv + 'userSalt' + username
-            redisClient.set(saltQuery, 'doesnt matter what is inerted here', function(){
-                redisClient.set(saltUsernameQuery, mySalt, function(){
-                    callback(mySalt)
-                })
-            })
-        }
-
-        var tryToStoreSalt = function(err, mySalt){
-            if(err) {
-                var salt = generateSalt()
-                checkSaltAvailability(salt, tryToStoreSalt)
+        return salt
+    },
+    checkSaltAvailability: function(redisClient, mySalt, username, callback){
+        var thisObject = this
+        var saltQuery = redisEnv + '#salt#' + mySalt
+        redisClient.exists(saltQuery, function(err, reply){
+            if(reply === 1){
+                thisObject.tryToStoreSalt('salt already exists', null, username, redisClient, callback)
             }
             else {
-                storeSalt(mySalt, mainCallback)
+                thisObject.tryToStoreSalt(null, mySalt, username, redisClient, callback)
             }
+        })
+    },
+    storeSalt: function(redisClient, username, mySalt, callback){
+        var thisObject = this
+        var saltQuery = redisEnv + '#salt#' + mySalt
+        var saltUsernameQuery = redisEnv + '#userSalt#' + username
+        redisClient.set(saltQuery, 'doesnt matter what is inerted here', function(){
+            redisClient.set(saltUsernameQuery, mySalt, function(){
+                callback(mySalt)
+            })
+        })
+    },
+    tryToStoreSalt: function(err, mySalt, username, redisClient, callback) {
+        var thisObject = this
+        if(err) {
+            var salt = thisObject.generateSalt()
+            thisObject.checkSaltAvailability(redisClient, salt, username, callback)
         }
-
-        tryToStoreSalt('not really error')
+        else {
+            thisObject.storeSalt(redisClient, username, mySalt, callback)
+        }
+    },
+    generateSaltAndStoreIt: function(redisClient,username, mainCallback){
+        this.tryToStoreSalt('not really error', null, username, redisClient, mainCallback)
     },
     hashSaltAndPasswordAndStoreIt: function(redisClient, username, password, salt, callback){
-        var hashedPasswordAndSalt = sha256.update((password +  salt), 'utf8').digest('hex')
-        var queryUsername = redisEnv + 'username' + username
+        var hashedPasswordAndSalt = this.getHashedPasswordAndSalt(password, salt)
+        var queryUsername = redisEnv + '#usernamePassword#' + username
         redisClient.set(queryUsername, hashedPasswordAndSalt, function(){
             callback()
         })
-        
     },
+    
     signup: function (redisClient, data, callback) {    
         var thisObject = this
-        var queryUsername = redisEnv + 'username' + data.username
+        var queryUsername = redisEnv + '#usernamePassword#' + data.username
         redisClient.exists(queryUsername, function (err, reply) {
             if (reply === 1) {
                 callback('signupFail', data.username)
@@ -83,18 +81,25 @@ var util = {
         })
     }
     ,
+    getHashedPasswordAndSalt: function(password, salt){
+        return sha256(password + salt)
+    },
     login: function (redisClient, data, callback) {
-        var queryUsername = redisEnv + 'username' + data.username
-        var queryPassword = redisEnv + 'password' + data.password
+        var thisObject = this
+        var queryUsername = redisEnv + '#usernamePassword#' + data.username
         redisClient.exists(queryUsername, function (err, reply) {
             if (reply === 1) {
-                redisClient.get(queryUsername, function (err, password) {
-                    if (queryPassword === password) {
-                        callback('loginSuccess', data.username)
-                    }
-                    else {
-                        callback('loginFail')
-                    }
+                var usernameSaltQuery = redisEnv + '#userSalt#' + data.username
+                redisClient.get(usernameSaltQuery, function(err, userSalt){
+                    var hashedPasswordAndSaltCheck = thisObject.getHashedPasswordAndSalt(data.password, userSalt)
+                    redisClient.get(queryUsername, function(err, hashPasswordAndSaltDb){
+                        if(hashedPasswordAndSaltCheck === hashPasswordAndSaltDb){
+                            callback('loginSuccess', data.username)
+                        }
+                        else {
+                            callback('loginFail')
+                        }
+                    })
                 })
             }
             else {
@@ -113,7 +118,7 @@ var util = {
 
     },
     openPrivateChat: function (redisClient, chatParticipants, callback) {
-        var privateChatInDB = redisEnv + 'privateChat' + chatParticipants.from + '#' + chatParticipants.to
+        var privateChatInDB = redisEnv + '#privateChat#' + chatParticipants.from + '#' + chatParticipants.to
         redisClient.exists(privateChatInDB, function (err, reply) {
             if (reply === 1) {
                 redisClient.get(privateChatInDB, function (err, messages) {
@@ -128,7 +133,7 @@ var util = {
         })
     },
     openGroupChat: function (redisClient, username, callback) {
-        var groupChatInDB = redisEnv + 'groupChat' + username
+        var groupChatInDB = redisEnv + '#groupChat#' + username
         redisClient.exists(groupChatInDB, function (err, reply) {
             if (reply === 1) {
                 redisClient.get(groupChatInDB, function (err, messages) {
@@ -147,7 +152,7 @@ var util = {
         var privateOrGroupChat, fromToPrefix, toFromPrefix
         var privateMessage = !!data.to
         if (privateMessage) {
-            privateOrGroupChat = 'privateChat'
+            privateOrGroupChat = '#privateChat#'
             fromToPrefix = data.from + '#' + data.to
             toFromPrefix = data.to + '#' + data.from
             var fromToQuery = redisEnv + privateOrGroupChat + fromToPrefix
@@ -157,7 +162,7 @@ var util = {
             addMessageToDB(toFromQuery);
         }
         else {
-            privateOrGroupChat = 'groupChat'
+            privateOrGroupChat = '#groupChat#'
             allClientSockets.forEach(function (_socket) {
                 var query = redisEnv + privateOrGroupChat + _socket.username
                 _socket.username && addMessageToDB(query)
@@ -204,7 +209,7 @@ var util = {
         })
     },
     showChat: function (socket, redisClient, username) {
-        var redisCorrespondence = redisEnv + 'correspondence' + username
+        var redisCorrespondence = redisEnv + '#correspondence#' + username
         redisClient.get(redisCorrespondence, function (err, messages) {
             messages && socket.emit('showCorrespondence', JSON.parse(messages))
         })
@@ -212,11 +217,11 @@ var util = {
     deleteChat: function (redisClient, deleterUsername, deleteChatWith, callback) {
         var privateOrGroupChat, fromToPrefix, toFromPrefix
         if (deleteChatWith) {
-            privateOrGroupChat = 'privateChat'
+            privateOrGroupChat = '#privateChat#'
             fromToPrefix = deleterUsername + '#' + deleteChatWith
         }
         else {
-            privateOrGroupChat = 'groupChat'
+            privateOrGroupChat = '#groupChat#'
             fromToPrefix = deleterUsername
 
         }
