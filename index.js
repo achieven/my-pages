@@ -358,21 +358,22 @@ function messengerHelper() {
                 })
             })
         })
-        function buildPage() {
-            var webpack = require('webpack')
-            var webpackDevMiddleware = require('webpack-dev-middleware')
-            //var webpackHotMiddleware = require('webpack-hot-middleware')
-            var config = require('./mywebsites/messenger/webpack.config.js')
-
-            var compiler = webpack(config)
-            app.use(webpackDevMiddleware(compiler, {noInfo: true, publicPath: config.output.publicPath}))
-            //app.use(webpackHotMiddleware(compiler))
-        }
-
-        buildPage()
     })
 }
 messengerHelper();
+
+function buildPage() {
+    var webpack = require('webpack')
+    var webpackDevMiddleware = require('webpack-dev-middleware')
+    //var webpackHotMiddleware = require('webpack-hot-middleware')
+    var config = require('./mywebsites/messenger/webpack.config.js')
+
+    var compiler = webpack(config)
+    app.use(webpackDevMiddleware(compiler, {noInfo: true, publicPath: config.output.publicPath}))
+    //app.use(webpackHotMiddleware(compiler))
+}
+
+buildPage()
 app.get('/userDetails', function (req, res) {
     const parser = new userAgentParser()
     const parsedUserAgent = parser.setUA(req.headers['user-agent']).getResult()
