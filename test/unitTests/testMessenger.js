@@ -8,7 +8,9 @@ function deleteUsernameFromDb(username, callback){
     redisClient.del(redisEnv + '#userSalt#' + username, function(err, reply){
         redisClient.del(redisEnv + 'userSalt' + reply, function(){
             redisClient.del(redisEnv + '#usernamePassword#' + username, function(){
-                callback()
+                redisClient.del(redisEnv + '#usernameEmail#' + username, function(){
+                    callback()
+                })
             })
         })
     })
@@ -114,7 +116,7 @@ describe('tryToStoreSalt', function () {
     })
 })
 
-describe('signup', function () {
+describe.only('signup', function () {
     it('should fail signup when username already exists', function (done) {
         var data = {
             username: 'a',
@@ -135,8 +137,10 @@ describe('signup', function () {
 
         var data = {
             username: 'new user name',
-            password: 'password'
+            password: 'password',
+            email: 'email'
         }
+        
         var counter = 0
 
 
@@ -162,9 +166,14 @@ describe('signup', function () {
                         redisClient.get(userPasswordQuery, function (err, reply) {
                             expect(reply).to.be.a('string')
                             expect(reply.length).to.be.equal(64)
-                           deleteUsernameFromDb(data.username, function(){
-                               done()
-                           })
+                            var userEmailQuery = redisEnv + '#usernameEmail#' + data.username
+                            redisClient.get(userEmailQuery, function(err, reply){
+                                expect(reply).to.be.equal(data.email)
+                                deleteUsernameFromDb(data.username, function(){
+                                    done()
+                                })
+                            })
+                           
                         })
                     })
                 })

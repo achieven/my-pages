@@ -65,10 +65,16 @@ var LoginAsPage = React.createClass({
 })
 
 var LoginSignupPage = React.createClass({
+    getInitialState: function () {
+        return {
+            loginTrials: (this.props.loginTrials || 0)
+        }
+    },
     start: function () {
         $('.loginSignupPage').removeClass('hide')
         loginSignupComponent.submitLoginForm();
         loginSignupComponent.submitSignupForm();
+        loginSignupComponent.forgotPassword()
     },
     render: function () {
         return (
@@ -84,6 +90,9 @@ var LoginSignupPage = React.createClass({
                                 </div>
                                 <div className="row">
                                     <label>Password</label>
+                                    <span className="paddingLeft15px">
+                                        <a href="#" className="forgotPasswordBtn">Forgot Password?</a>
+                                    </span>
                                     <input type="password" className="col-xs-6 form-control passwordLogin"/>
                                 </div>
                                 <h4 className="row col-xs-12"></h4>
@@ -94,6 +103,10 @@ var LoginSignupPage = React.createClass({
                         <div className="col-xs-3"></div>
                         <div className="col-xs-3">
                             <form className="signupForm">
+                                <div className="row">
+                                    <label>Email</label>
+                                    <input type="email" className="col-xs-9 form-control emailSignup"/>
+                                </div>
                                 <div className="row">
                                     <label>Username</label>
                                     <input type="text" className="col-xs-9 form-control usernameSignup"/>
@@ -138,12 +151,13 @@ var LoginSignupPage = React.createClass({
     submitSignupForm: function () {
         $('.signupForm').on('submit', function (e) {
             e.preventDefault()
+            var emailSignup = $('.emailSignup').val()
             var usernameSignup = $('.usernameSignup').val()
             var passwordSignup1 = $('.passwordSignup1').val()
             var passwordSignup2 = $('.passwordSignup2').val()
-            if (usernameSignup.length < 8 || usernameSignup.length > 15) {
+            if (usernameSignup.length < 8 || usernameSignup.length > 50) {
                 $('.signupError').removeClass('hide')
-                $('.signupError').text('Username must be between 8 and 15 letters')
+                $('.signupError').text('Username must be between 8 and 50 characters')
             }
             else if (usernameSignup.indexOf('#') > -1) {
                 $('.signupError').removeClass('hide')
@@ -160,7 +174,8 @@ var LoginSignupPage = React.createClass({
             else {
                 var data = {
                     username: usernameSignup,
-                    password: passwordSignup2
+                    password: passwordSignup2,
+                    email: emailSignup
                 }
                 socket.emit('signup', data)
                 socket.removeAllListeners('signupSuccess')
@@ -171,6 +186,24 @@ var LoginSignupPage = React.createClass({
                 socket.on('signupFail', function (username) {
                     $('.signupError').removeClass('hide')
                     $('.signupError').text('Username ' + username + ' is not available')
+                })
+            }
+        })
+    },
+    forgotPassword: function () {
+        $('.forgotPasswordBtn').on('click', function (e) {
+            e.preventDefault()
+            var usernameLogin = $('.usernameLogin').val()
+            if (usernameLogin.length < 8 || usernameLogin.length > 50) {
+                $('.loginError').removeClass('hide')
+                $('.loginError').text('Insert a valid username, should be between 8 and 50 characters')
+            }
+            else {
+                socket.emit('forgotPassword',usernameLogin)
+                socket.removeAllListeners('sendRestPasswordEmail')
+                socket.on('sentResetPasswordEmail', function(){
+                    $('.loginError').removeClass('hide')
+                    $('.loginError').text('An email with a reset password link was sent to you. We use the email you entered when signing up.')
                 })
             }
         })

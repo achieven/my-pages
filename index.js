@@ -7,7 +7,7 @@ const bodyParser = require('body-parser')
 const socketio = require('socket.io')
 const http = require('http')
 const server = http.Server(app);
-// const io = socketio(server);
+
 const userAgentParser = require('user-agent-parser')
 const util = require('./util/util')
 const winston = require('winston')
@@ -277,7 +277,17 @@ app.get('/simplerestapi', function (req, res) {
 })
 
 app.get('/messengerReact', function (req, res) {
-    var html = Handlebars.compile(fs.readFileSync('./mywebsites/messenger/index.html', 'utf8'))()
+    var html = Handlebars.compile(fs.readFileSync('./mywebsites/messenger/index.html', 'utf8'))({
+        env: process.env.NODE_ENV,
+        componentsToHide: JSON.stringify(['forgotPassword'])
+    })
+    res.status(200).send(html)
+})
+app.get('/messengerReact/resetPassword', function(req,res){
+    var html = Handlebars.compile(fs.readFileSync('./mywebsites/messenger/index.html', 'utf8'))({
+        env: process.env.NODE_ENV,
+        componentsToHide: JSON.stringify(['loginAs, loginSignup'])
+    })
     res.status(200).send(html)
 })
 
@@ -293,6 +303,7 @@ function messengerHelper() {
             socket.emit('env', process.env.NODE_ENV)
             socket.removeAllListeners('signup')
             socket.removeAllListeners('login')
+            socket.removeAllListeners('forgotPassword')
             socket.removeAllListeners('loginAs')
             socket.removeAllListeners('getOnlineUsers')
             socket.removeAllListeners('clientMessage')
@@ -326,6 +337,11 @@ function messengerHelper() {
                     socket.username = param
                     socket.emit(message, param)
                     socket.emit('addOnlineUser', socket.username)
+                })
+            })
+            socket.on('forgotPassword',function(username){
+                util.forgotPassword(redisClient,username, function(message){
+                    socket.emit(message)
                 })
             })
             socket.on('loginAs', function(username){

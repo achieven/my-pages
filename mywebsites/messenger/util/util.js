@@ -1,5 +1,6 @@
 var redisEnv = process.env.NODE_ENV
 var sha256 = require('js-sha256').sha256
+var nodemailer = require('nodemailer');
 
 var util = {
     addSocket: function (socket, allClientSockets, socketId) {
@@ -12,7 +13,7 @@ var util = {
     generateSalt: function(){
         var saltLength = 64
         var salt = ''
-        var alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()-=_+`~,<.>/?;:'
+        var alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%&*()-=_`~,./?:'
         for(var i=0;i<saltLength;i++){
             var randomIndex = Math.floor(Math.random() * alphabet.length)
             var randomChar = alphabet.charAt(randomIndex)
@@ -62,8 +63,14 @@ var util = {
             callback()
         })
     },
-    
-    signup: function (redisClient, data, callback) {    
+    storeEmail: function(redisClient, username, email, callback){
+        var queryUserEmail = redisEnv + '#usernameEmail#' + username
+        redisClient.set(queryUserEmail, email, function () {
+            callback()
+        })
+    },
+
+    signup: function (redisClient, data, callback) {
         var thisObject = this
         var queryUsername = redisEnv + '#usernamePassword#' + data.username
         redisClient.exists(queryUsername, function (err, reply) {
@@ -73,8 +80,11 @@ var util = {
             else {
                 thisObject.generateSaltAndStoreIt(redisClient, data.username, function(salt){
                     thisObject.hashSaltAndPasswordAndStoreIt(redisClient, data.username, data.password, salt, function(){
-                        callback('signupSuccess', data.username)
-                        callback('addOnlineUser', data.username)
+                        thisObject.storeEmail(redisClient, data.username, data.email,function(){
+                            callback('signupSuccess', data.username)
+                            callback('addOnlineUser', data.username)
+                        })
+
                     })
                 })
             }
@@ -104,6 +114,45 @@ var util = {
             }
             else {
                 callback('loginFail')
+            }
+        })
+    },
+    forgotPassword:function(redisClient, username, callback){
+        var thisObject = this
+
+        var userEmailQuery = redisEnv + '#usernameEmail#' + username
+        redisClient.get(userEmailQuery, function(err, email){
+            if(!err){
+                var transporter = nodemailer.createTransport({
+                    service: 'Gmail',
+                    auth: {
+                        user: 'achievendar.tk@gmail.com',
+                        pass: 'achievendar.tkPassword'
+                    }
+                });
+                var domain = process.env.NODE_ENV === 'prod' ? 'http://achievendar.tk/'  : 'http://localhost:5000/'
+                var url = 'messengerReact/resetPassword'
+                var token = thisObject.generateSalt()
+                var queryParams = '?token=' + token
+                var link = domain + url + queryParams
+                var emailText = 'Hi ' + username + '. Please click on the following link to recover your password. ' + link
+                var mailOptions = {
+                    from: 'achievendar.tk@gmail.com',
+                    to: email,
+                    subject: 'Reset password to achievendar.tk messenger',
+                    text: emailText
+                }
+                transporter.sendMail(mailOptions, function(error, info){
+                    if(error){
+                        console.log(error);
+                    }else{
+                        console.log('Message sent: ' + info.response);
+                        var userTokenQuery = redisEnv + '#usernameForgotPasswordToken#' + username
+                        redisClient.set(userTokenQuery, token)
+                        callback('sentResetPasswordEmail')
+                    };
+                });
+
             }
         })
     },
