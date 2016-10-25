@@ -304,7 +304,7 @@ function messengerHelper() {
             function keepSocketAlive(){
                 setInterval(function(){
                     socket.emit('heartbeat')
-                },5000)
+                },3000)
             }
             keepSocketAlive()
 
