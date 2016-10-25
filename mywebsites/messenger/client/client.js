@@ -487,14 +487,12 @@ var ChatPage = React.createClass({
                 <div className="chatTop">
                     <div className="container">
                         <div className="row">
-                            <div className="col-sm-8 col-xs-4">
-                                <h3 className="h3VerticalMiddle">Hello {this.state.username}!</h3>
+                            <div className="col-sm-10 col-xs-8">
+                                <h4 className="h3VerticalMiddle">Hello {this.state.username}!</h4>
                             </div>
-                            <div className="col-sm-4 col-xs-8">
+                            <div className="col-sm-2 col-xs-4">
                                 <div className="row">
-                                    <div className="col-xs-6">
-                                    </div>
-                                    <div className="col-xs-6">
+                                    <div className="col-xs-12">
                                         <button className="btn btn-danger col-xs-12 deleteCorrespondence">Delete
                                             Chat
                                         </button>
