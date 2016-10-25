@@ -301,6 +301,12 @@ function messengerHelper() {
             socket.removeAllListeners('openGroupChat')
             
 
+            function keepSocketAlive(){
+                setInterval(function(){
+                    socket.emit('heartbeat')
+                },1000)
+            }
+            keepSocketAlive()
 
             function mockSslCertificate() {
                 socket.removeAllListeners('canITrustYou?')
