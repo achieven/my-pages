@@ -2,6 +2,20 @@ var util = require('../../mywebsites/messenger/util/util')
 const expect = require('chai').expect
 var redis = require('redis')
 var redisClient = redis.createClient();
+var redisEnv = process.env.NODE_ENV
+
+function deleteUsernameFromDb(username, callback){
+    redisClient.del(redisEnv + '#userSalt#' + username, function(err, reply){
+        redisClient.del(redisEnv + 'userSalt' + reply, function(){
+            redisClient.del(redisEnv + '#usernamePassword#' + username, function(){
+                callback()
+            })
+        })
+    })
+}
+
+
+
 describe('addSocket', function () {
     it('should add the socket to the array if it doesnt exist already', function () {
         var allClientSockets = []
@@ -13,6 +27,152 @@ describe('addSocket', function () {
         expect(socketId).to.be.equal(1)
     })
 })
+describe('generateSalt', function () {
+    it('should have length of 64', function () {
+        var salt = util.generateSalt()
+        expect(salt.length).to.be.equal(64)
+    })
+})
+
+describe('checkSaltAvailability', function () {
+    it('should call tryToStoreSalt with error if salt already exists', function (done) {
+        var tryToStoreSaltCopy = util.tryToStoreSalt
+        var myArg
+        util.tryToStoreSalt = function (arg) {
+            myArg = arg
+
+        }
+        var mySalt = 'mySalt'
+        var saltQuery = redisEnv + '#salt#' + mySalt
+        redisClient.set(saltQuery, 'whatever', function () {
+            util.checkSaltAvailability(redisClient, mySalt)
+            setTimeout(function () {
+                expect(myArg).to.be.equal('salt already exists')
+                redisClient.del(saltQuery, function () {
+                    done()
+                })
+            }, 500)
+        })
+    })
+    it('should call tryToStoreSalt with error null if salt doesnt exists', function (done) {
+        var tryToStoreSaltCopy = util.tryToStoreSalt
+        var myArg
+        util.tryToStoreSalt = function (arg) {
+            myArg = arg
+
+        }
+        var mySalt = 'mySalt'
+
+        util.checkSaltAvailability(redisClient, mySalt)
+        setTimeout(function () {
+            expect(myArg).to.be.equal(null)
+            done()
+        }, 500)
+
+    })
+})
+
+describe('storeSalt', function () {
+    it('should store the salt as key and as value from the username', function (done) {
+        var username = 'a'
+        var mySalt = 'mySalt'
+        util.storeSalt(redisClient, username, mySalt, function () {
+            var saltQuery = redisEnv + '#salt#' + mySalt
+            var saltUsernameQuery = redisEnv + '#userSalt#' + username
+            redisClient.get(saltQuery, function (err, reply) {
+                expect(reply).to.be.equal('doesnt matter what is inerted here')
+                redisClient.get(saltUsernameQuery, function (err, reply) {
+                    expect(reply).to.be.equal(mySalt)
+                    done()
+                })
+            })
+        })
+    })
+})
+
+describe('tryToStoreSalt', function () {
+    var arg1, arg2
+    it('should call checkSaltAvailability if there is an error', function (done) {
+        util.checkSaltAvailability = function (arg) {
+            arg1 = arg
+        }
+        util.tryToStoreSalt('some error', null, null, 1)
+        setTimeout(function () {
+            expect(arg1).to.be.equal(1)
+            done()
+        }, 500)
+    })
+    it('should call storeSalt if there is an error', function (done) {
+        util.storeSalt = function (arg) {
+            arg2 = arg
+        }
+        util.tryToStoreSalt(null, null, null, 2)
+        setTimeout(function () {
+            expect(arg2).to.be.equal(2)
+            done()
+        }, 500)
+    })
+})
+
+describe('signup', function () {
+    it('should fail signup when username already exists', function (done) {
+        var data = {
+            username: 'a',
+            password: 'b'
+        }
+        var query = redisEnv + '#usernamePassword#' + data.username
+        redisClient.set(query, data.password, function () {
+            util.signup(redisClient, data, function (message, param) {
+                expect(message).to.be.equal('signupFail')
+                expect(param).to.be.equal(data.username)
+                redisClient.del(query, function () {
+                    done()
+                })
+            })
+        })
+    })
+    it('should succeed when username doesnt already exist and store salt as key, as value and hashed salt and password in database', function (done) {
+
+        var data = {
+            username: 'new user name',
+            password: 'password'
+        }
+        var counter = 0
+
+
+        util.signup(redisClient, data, function (message, param) {
+            counter ++
+            if(counter === 1){
+                expect(message).to.be.equal('signupSuccess')
+            }
+            else if (counter === 2){
+                expect(message).to.be.equal('addOnlineUser')
+            }
+            if(counter === 2) {
+
+                expect(param).to.be.equal(data.username)
+                var userSaltQuery = redisEnv + '#userSalt#' + data.username
+                redisClient.get(userSaltQuery, function (err, reply) {
+                    expect(reply).to.be.a('string')
+                    expect(reply.length).to.be.equal(64)
+                    var saltQuery = redisEnv + '#salt#' + reply
+                    redisClient.get(saltQuery, function (err, reply) {
+                        expect(reply).to.be.equal('doesnt matter what is inerted here')
+                        var userPasswordQuery = redisEnv + '#usernamePassword#' + data.username
+                        redisClient.get(userPasswordQuery, function (err, reply) {
+                            expect(reply).to.be.a('string')
+                            expect(reply.length).to.be.equal(64)
+                           deleteUsernameFromDb(data.username, function(){
+                               done()
+                           })
+                        })
+                    })
+                })
+            }
+        })
+    })
+})
+
 describe('login', function () {
     it('should fail the login if the username doesnt exist', function (done) {
         var data = {
@@ -28,48 +188,51 @@ describe('login', function () {
     it('should fail login if username and passwords dont match', function (done) {
         var data = {
             username: 'a',
-            password: '1234'
+            password: 'b'
         }
-        util.login(redisClient, data, function (message, param) {
-            expect(message).to.be.equal('loginFail')
-            expect(param).to.be.undefined
-            done()
+ 
+        var counter = 0
+        
+        util.signup(redisClient, data, function(){
+            counter++
+            if(counter === 2){
+                var wrongPasswordData = {
+                    username: 'a',
+                    password: 'c'
+                }
+
+                util.login(redisClient, wrongPasswordData, function (message, param) {
+                    expect(message).to.be.equal('loginFail')
+                    expect(param).to.be.undefined
+                    deleteUsernameFromDb(data.username, function(){
+                        done()
+                    })
+                })
+            }
+            
         })
+        
     })
     it('should succeed login when username and password exist', function (done) {
         var data = {
             username: 'a',
             password: 'b'
         }
-        util.login(redisClient, data, function (message, param) {
-            expect(message).to.be.equal('loginSuccess')
-            expect(param).to.be.equal(data.username)
-            done()
-        })
-    })
-})
-
-describe('signup', function () {
-    it('should fail signup when username already exists', function (done) {
-        var data = {
-            username: 'a',
-            password: 'b'
-        }
-        util.signup(redisClient, data, function (message, param) {
-            expect(message).to.be.equal('signupFail')
-            expect(param).to.be.equal(data.username)
-            done()
-        })
-    })
-    it('should succeed when username doesnt already exist', function (done) {
-        var data = {
-            username: 'new user name',
-            password: 'password'
-        }
-        util.signup(redisClient, data, function (message, param) {
-            expect(message).to.be.equal('signupFail')
-            expect(param).to.be.equal(data.username)
-            done()
+       
+        var counter = 0
+         util.signup(redisClient, data, function(){
+             counter ++
+             if(counter === 2){
+                 util.login(redisClient, data, function (message, param) {
+                     expect(message).to.be.equal('loginSuccess')
+                     expect(param).to.be.equal(data.username)
+                     redisClient.get(redisEnv + '#userSalt#' + data.username, function(err, reply){
+                         deleteUsernameFromDb(data.username, function(){
+                             done()
+                         })
+                     })
+                 })
+             }
         })
     })
 })
@@ -111,13 +274,14 @@ describe('openPrivateChat', function () {
     it('should return array with messages if messages were written to this private chat', function (done) {
         var chatParticipants = {from: 1, to: 2}
         var insertedMessages = [{message: 'hi', from: chatParticipants.from}]
-        var query = process.env.NODE_ENV + 'privateChat' + chatParticipants.from + '#' + chatParticipants.to
+        var query = redisEnv + '#privateChat#' + chatParticipants.from + '#' + chatParticipants.to
         redisClient.set(query, JSON.stringify(insertedMessages), function () {
             util.openPrivateChat(redisClient, chatParticipants, function (message, param) {
                 expect(message).to.be.equal('showPrivateChat')
                 expect(param).to.eql(insertedMessages)
-                redisClient.del(query)
-                done()
+                redisClient.del(query, function(){
+                    done()
+                })
             })
         })
     })
@@ -144,13 +308,15 @@ describe('openGroupChat', function () {
     it('should return array with messages if messages were written to this private chat', function (done) {
         var username = 1
         var insertedMessages = [{message: 'hi', from: 2}]
-        var query = process.env.NODE_ENV + 'groupChat' + username
+        var query = redisEnv + '#groupChat#' + username
         redisClient.set(query, JSON.stringify(insertedMessages), function () {
             util.openGroupChat(redisClient, username, function (message, param) {
                 expect(message).to.be.equal('showGroupChat')
                 expect(param).to.eql(insertedMessages)
-                redisClient.del(query)
-                done()
+                redisClient.del(query, function(){
+                    done() 
+                })
+                
             })
         })
     })
@@ -163,8 +329,8 @@ describe('sendMessage', function () {
         var receiverSocket = {username: 2}
         var allClientSockets = [senderSocket, receiverSocket]
         var data = {from: senderSocket.username, to: receiverSocket.username, message: 'hello'}
-        var fromToQuery = process.env.NODE_ENV + 'privateChat' + data.from + '#' + data.to
-        var toFromQuery = process.env.NODE_ENV + 'privateChat' + data.to + '#' + data.from
+        var fromToQuery = redisEnv + '#privateChat#' + data.from + '#' + data.to
+        var toFromQuery = redisEnv + '#privateChat#' + data.to + '#' + data.from
         var counter = 0;
         util.sendMessage(socket, redisClient, allClientSockets, data, function (_socket, message, param) {
             setTimeout(function () {
@@ -176,8 +342,8 @@ describe('sendMessage', function () {
                     expect(message).to.be.equal('serverMessageToOther')
                     expect(param).to.eql(data)
                 }
-                var fromToQuery = process.env.NODE_ENV + 'privateChat' + data.from + '#' + data.to
-                var toFromQuery = process.env.NODE_ENV + 'privateChat' + data.to + '#' + data.from
+                var fromToQuery = redisEnv + '#privateChat#' + data.from + '#' + data.to
+                var toFromQuery = redisEnv + '#privateChat#' + data.to + '#' + data.from
                 redisClient.get(fromToQuery, function (err, messages) {
                     var messagesArray = JSON.parse(messages)
                     expect(messagesArray.length).to.be.equal(1)
@@ -197,7 +363,7 @@ describe('sendMessage', function () {
                     })
                 })
 
-            }, 1000)
+            }, 500)
         })
     })
     it('should add message to group chat for everyone who is online and send data to the client', function (done) {
@@ -205,9 +371,9 @@ describe('sendMessage', function () {
         var senderSocket = {username: 1}
         var receiverSocket1 = {username: 2}
         var receiverSocket2 = {username: 3}
-        var senderQuery = process.env.NODE_ENV + 'groupChat' + senderSocket.username
-        var receiverQuery1 = process.env.NODE_ENV + 'groupChat' + receiverSocket1.username
-        var receiverQuery2 = process.env.NODE_ENV + 'groupChat' + receiverSocket2.username
+        var senderQuery = redisEnv + '#groupChat#' + senderSocket.username
+        var receiverQuery1 = redisEnv + '#groupChat#' + receiverSocket1.username
+        var receiverQuery2 = redisEnv + '#groupChat#' + receiverSocket2.username
 
         var allClientSockets = [senderSocket, receiverSocket1, receiverSocket2]
         var data = {from: senderSocket.username, to: undefined, message: 'hello'}
@@ -222,9 +388,10 @@ describe('sendMessage', function () {
                     expect(message).to.be.equal('serverMessageToOther')
                     expect(param).to.eql(data)
                 }
-                var senderQuery = process.env.NODE_ENV + 'groupChat' + senderSocket.username
-                var receiverQuery1 = process.env.NODE_ENV + 'groupChat' + receiverSocket1.username
-                var receiverQuery2 = process.env.NODE_ENV + 'groupChat' + receiverSocket2.username
+                var senderQuery = redisEnv + '#groupChat#' + senderSocket.username
+                var receiverQuery1 = redisEnv + '#groupChat#' + receiverSocket1.username
+                var receiverQuery2 = redisEnv + '#groupChat#' + receiverSocket2.username
+                
                 counter++
 
                 counter === 3 && redisClient.get(senderQuery, function (err, messages) {
@@ -259,31 +426,31 @@ describe('sendMessage', function () {
                     })
                 })
 
-            }, 1000)
+            }, 500)
         })
 
 
     })
 })
 
-describe('deleteChat', function(){
-    it('should delete the chat for the deleter only in private chat', function(done){
+describe('deleteChat', function () {
+    it('should delete the chat for the deleter only in private chat', function (done) {
         var deleterUsername = 1
         var deleteChatWith = 2
-        var fromToQuery = process.env.NODE_ENV + 'privateChat' + deleterUsername + '#' + deleteChatWith
-        var toFromQuery = process.env.NODE_ENV + 'privateChat' + deleteChatWith + '#' + deleterUsername
+        var fromToQuery = redisEnv + '#privateChat#' + deleterUsername + '#' + deleteChatWith
+        var toFromQuery = redisEnv + '#privateChat#' + deleteChatWith + '#' + deleterUsername
         var messagesSent = [{message: 'hello', from: deleterUsername}]
-        redisClient.set(fromToQuery, JSON.stringify(messagesSent), function(){
-            redisClient.set(toFromQuery, JSON.stringify(messagesSent), function(){
-                util.deleteChat(redisClient, deleterUsername, deleteChatWith, function(message){
+        redisClient.set(fromToQuery, JSON.stringify(messagesSent), function () {
+            redisClient.set(toFromQuery, JSON.stringify(messagesSent), function () {
+                util.deleteChat(redisClient, deleterUsername, deleteChatWith, function (message) {
                     expect(message).to.be.equal('correspondenceDeleted')
-                    redisClient.exists(fromToQuery, function(err, reply){
+                    redisClient.exists(fromToQuery, function (err, reply) {
                         expect(reply).to.be.equal(0)
-                        redisClient.get(toFromQuery, function(err,messages){
+                        redisClient.get(toFromQuery, function (err, messages) {
                             var messagesArray = JSON.parse(messages)
                             expect(messagesArray.length).to.be.equal(1)
                             expect(messagesArray[0]).to.eql(messagesSent[0])
-                            redisClient.del(toFromQuery, function(){
+                            redisClient.del(toFromQuery, function () {
                                 done()
                             })
                         })
@@ -293,23 +460,23 @@ describe('deleteChat', function(){
         })
     })
 
-    it('should delete the chat for the deleter only in group chat', function(done){
+    it('should delete the chat for the deleter only in group chat', function (done) {
         var deleterUsername = 1
         var otherUsernameInGroup = 2
-        var deleterQuery = process.env.NODE_ENV + 'groupChat' + deleterUsername
-        var otherUserQuery = process.env.NODE_ENV + 'groupChat' + otherUsernameInGroup
+        var deleterQuery = redisEnv + '#groupChat#' + deleterUsername
+        var otherUserQuery = redisEnv + '#groupChat#' + otherUsernameInGroup
         var messagesSent = [{message: 'hello', from: deleterUsername}]
-        redisClient.set(deleterQuery, JSON.stringify(messagesSent), function(){
-            redisClient.set(otherUserQuery, JSON.stringify(messagesSent), function(){
-                util.deleteChat(redisClient, deleterUsername, undefined, function(message){
+        redisClient.set(deleterQuery, JSON.stringify(messagesSent), function () {
+            redisClient.set(otherUserQuery, JSON.stringify(messagesSent), function () {
+                util.deleteChat(redisClient, deleterUsername, undefined, function (message) {
                     expect(message).to.be.equal('correspondenceDeleted')
-                    redisClient.exists(deleterQuery, function(err, reply){
+                    redisClient.exists(deleterQuery, function (err, reply) {
                         expect(reply).to.be.equal(0)
-                        redisClient.get(otherUserQuery, function(err,messages){
+                        redisClient.get(otherUserQuery, function (err, messages) {
                             var messagesArray = JSON.parse(messages)
                             expect(messagesArray.length).to.be.equal(1)
                             expect(messagesArray[0]).to.eql(messagesSent[0])
-                            redisClient.del(otherUserQuery, function(){
+                            redisClient.del(otherUserQuery, function () {
                                 done()
                             })
                         })

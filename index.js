@@ -25,7 +25,7 @@ app.use(bodyParser.urlencoded({extended: true}));
 
 app.get('/', function (req, res, next) {
     var projects = [
-        {name: 'Messenger', link: '/messengerReact', tools: 'react, redis, socket.io, localStorage'},
+        {name: 'Messenger', link: '/messengerReact', tools: 'react, redis, socket.io, localStorage, salt + sha256 hashing'},
         {name: 'User Details', link: '/userDetails', tools: 'sqlite, userAgent, chartist.js'},
         {name: 'Simple Rest Api', link: '/simplerestapi', tools: 'sqlite'},
         {name: 'Emitter', link: '/emitter', tools: 'react, socket.io'},
@@ -291,28 +291,41 @@ function messengerHelper() {
         io.of('/messengerReact').on('connection', function (socket) {
             socketId = util.addSocket(socket, allClientSockets, socketId)
             socket.emit('env', process.env.NODE_ENV)
-            socket.removeAllListeners('login')
             socket.removeAllListeners('signup')
+            socket.removeAllListeners('login')
             socket.removeAllListeners('loginAs')
             socket.removeAllListeners('getOnlineUsers')
             socket.removeAllListeners('clientMessage')
             socket.removeAllListeners('deleteCorrespondence')
             socket.removeAllListeners('openPrivateChat')
             socket.removeAllListeners('openGroupChat')
+            
 
+            function keepSocketAlive(){
+                setInterval(function(){
+                    socket.emit('heartbeat')
+                },3000)
+            }
+            keepSocketAlive()
 
-
+            function mockSslCertificate() {
+                socket.removeAllListeners('canITrustYou?')
+                socket.on('canITrustYou?', function () {
+                    socket.emit('yesTrustMe')
+                })
+            }
+            mockSslCertificate();
+            socket.on('signup', function (data) {
+                util.signup(redisClient, data, function (message, param) {
+                    socket.username = param
+                    socket.emit(message, param)
+                })
+            })
             socket.on('login', function (data) {
                 util.login(redisClient, data, function (message, param) {
                     socket.username = param
                     socket.emit(message, param)
                     socket.emit('addOnlineUser', socket.username)
-                })
-            })
-            socket.on('signup', function (data) {
-                util.signup(redisClient, data, function (message, param) {
-                    socket.username = param
-                    socket.emit(message, param)
                 })
             })
             socket.on('loginAs', function(username){
@@ -345,27 +358,30 @@ function messengerHelper() {
                 })
             })
             socket.on('disconnect', function () {
+                console.log(socket.username, 'disconnecting')
+                serverLogger.log('info',socket.username + ' disconnecting')
                 allClientSockets = util.removeSocket(socket, allClientSockets)
                 util.getOnlineUsers(allClientSockets, function(_socket, message, param){
                     _socket.username && _socket.emit(message, param)
                 })
             })
         })
-        function buildPage() {
-            var webpack = require('webpack')
-            var webpackDevMiddleware = require('webpack-dev-middleware')
-            //var webpackHotMiddleware = require('webpack-hot-middleware')
-            var config = require('./mywebsites/messenger/webpack.config.js')
-
-            var compiler = webpack(config)
-            app.use(webpackDevMiddleware(compiler, {noInfo: true, publicPath: config.output.publicPath}))
-            //app.use(webpackHotMiddleware(compiler))
-        }
-
-        buildPage()
     })
 }
 messengerHelper();
+
+function buildPage() {
+    var webpack = require('webpack')
+    var webpackDevMiddleware = require('webpack-dev-middleware')
+    //var webpackHotMiddleware = require('webpack-hot-middleware')
+    var config = require('./mywebsites/messenger/webpack.config.js')
+
+    var compiler = webpack(config)
+    app.use(webpackDevMiddleware(compiler, {noInfo: true, publicPath: config.output.publicPath}))
+    //app.use(webpackHotMiddleware(compiler))
+}
+
+buildPage()
 app.get('/userDetails', function (req, res) {
     const parser = new userAgentParser()
     const parsedUserAgent = parser.setUA(req.headers['user-agent']).getResult()
@@ -505,4 +521,11 @@ app.post('/userDetails/userdata', function (req, res) {
         }
     })
 })
+
+app.get('/error', function(req,res){
+    var html = Handlebars.compile(fs.readFileSync('./error.html', 'utf8'))();
+    res.send(html)
+})
+
+
 
