@@ -304,7 +304,7 @@ function messengerHelper() {
             function keepSocketAlive(){
                 setInterval(function(){
                     socket.emit('heartbeat')
-                },1000)
+                },5000)
             }
             keepSocketAlive()
 
@@ -358,6 +358,8 @@ function messengerHelper() {
                 })
             })
             socket.on('disconnect', function () {
+                console.log(socket.username, 'disconnecting')
+                serverLogger.log('info',socket.username + ' disconnecting')
                 allClientSockets = util.removeSocket(socket, allClientSockets)
                 util.getOnlineUsers(allClientSockets, function(_socket, message, param){
                     _socket.username && _socket.emit(message, param)
