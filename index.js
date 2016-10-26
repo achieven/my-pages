@@ -342,6 +342,7 @@ function messengerHelper() {
                 })
             })
             socket.on('forgotPassword',function(username){
+                console.log(username)
                 util.forgotPassword(redisClient,username, function(message){
                     socket.emit(message)
                 })

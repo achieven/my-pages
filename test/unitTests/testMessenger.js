@@ -116,7 +116,7 @@ describe('tryToStoreSalt', function () {
     })
 })
 
-describe.only('signup', function () {
+describe('signup', function () {
     it('should fail signup when username already exists', function (done) {
         var data = {
             username: 'a',
@@ -247,7 +247,107 @@ describe('login', function () {
 })
 
 describe('forgotPassword', function(){
-    it('should fail when ')
+    it('send fake notification that email was sent if user doesnt exist in database and not insert token to database', function(done){
+        var usernameThatDoesntExist = 'user#that#doesnt#exist'
+        var usernameEmailQuery = redisEnv + '#usernameEmail#' + usernameThatDoesntExist
+        redisClient.exists(usernameEmailQuery, function(err, reply){
+            expect(reply).to.be.equal(0)
+            util.forgotPassword(redisClient, usernameThatDoesntExist, function(message){
+                expect(message).to.be.equal('sentResetPasswordEmail')
+                var userTokenQuery = redisEnv + '#usernameForgotPasswordToken#' + usernameThatDoesntExist
+                redisClient.exists(userTokenQuery, function(err, reply) {
+                    expect(reply).to.be.equal(0)
+                    done()
+                })
+            })
+        })
+    })
+    it('should sent real notification that email was sent if user doesnt exist in database and insert token to database', function(done){
+        this.timeout(5000)
+        var usernameThatWillExist = 'userThatwillExist'
+        var usernameEmailQuery = redisEnv + '#usernameEmail#' + usernameThatWillExist
+        var userEmail = 'achievendar.tk@gmail.com'
+        redisClient.exists(usernameEmailQuery, function(err, reply){
+            expect(reply).to.be.equal(0)
+            redisClient.set(usernameEmailQuery, userEmail, function(){
+                util.forgotPassword(redisClient, usernameThatWillExist, function(message){
+                    expect(message).to.be.equal('sentResetPasswordEmail')
+                    var userTokenQuery = redisEnv + '#usernameForgotPasswordToken#' + usernameThatWillExist
+                    redisClient.exists(userTokenQuery, function(err, reply) {
+                        expect(reply).to.be.equal(1)
+                        redisClient.del(userTokenQuery, function(){
+                            redisClient.del(usernameEmailQuery, function(){
+                                done()
+                            })
+                        })
+                    })
+                })
+            })
+        })
+    })
+})
+
+describe('resetPassword', function(){
+    it('should send reset password fail if the user doesnt hold this token and not store password in database', function(done){
+        var token = 'some token'
+        var usernameThatWillExist = 'userThatwillExist'
+        var password = 'some password'
+        var data = {
+            username: usernameThatWillExist,
+            password: password,
+            token: token
+        }
+        var userTokenQuery = redisEnv + '#usernameForgotPasswordToken#' + usernameThatWillExist
+        var userPasswordQuery = redisEnv + '#usernamePassword#' + usernameThatWillExist
+        
+        redisClient.exists(userTokenQuery, function(err, reply){
+            expect(reply).to.be.equal(0)
+            util.resetPassword(redisClient,data,function(message, param){
+                expect(message).to.be.equal('resetPasswordFail')
+                expect(param).to.be.equal('This is not your username, dont try to fool me!')
+                redisClient.exists(userPasswordQuery, function(err, reply){
+                    expect(reply).to.be.equal(0)
+                    done()
+                })
+            })
+        })
+        })
+       
+    it('should send reset password success if the user doesnt holds this token, store password in database and remove the token', function(done){
+        var token = 'some token'
+        var hashedToken = util.getHashedPasswordAndSalt('',token)
+        var password = 'some password'
+        var usernameThatWillExist = 'userThatwillExist'
+        var usernameEmailQuery = redisEnv + '#usernameEmail#' + usernameThatWillExist
+        var userTokenQuery = redisEnv + '#usernameForgotPasswordToken#' + usernameThatWillExist
+        var userPasswordQuery = redisEnv + '#usernamePassword#' + usernameThatWillExist
+        var data = {
+            username: usernameThatWillExist,
+            password: password,
+            token: token
+        }
+        redisClient.exists(userTokenQuery, function(err, reply){
+            expect(reply).to.be.equal(0)
+            redisClient.exists(userPasswordQuery, function(err, reply){
+                expect(reply).to.be.equal(0)
+                redisClient.set(userTokenQuery, hashedToken, function(){
+                    util.resetPassword(redisClient,data, function(message, param){
+                        expect(message).to.be.equal('resetPasswordSuccess')
+                        expect(param).to.be.equal(usernameThatWillExist)
+                        redisClient.exists(userTokenQuery, function(err, reply){
+                            expect(reply).to.be.equal(0)
+                            redisClient.exists(userPasswordQuery, function(err, reply){
+                                expect(reply).to.be.equal(1)
+                                redisClient.del(userPasswordQuery, function(){
+                                    done()
+                                })
+                            })
+                        })
+                    })
+                })
+            })
+        })
+    })
 })
 
 describe('getOnlineUsers', function () {
@@ -345,7 +445,7 @@ describe('sendMessage', function () {
         var fromToQuery = redisEnv + '#privateChat#' + data.from + '#' + data.to
         var toFromQuery = redisEnv + '#privateChat#' + data.to + '#' + data.from
         var counter = 0;
-        util.sendMessage(socket, redisClient, allClientSockets, data, function (_socket, message, param) {
+        util.sendMessage(senderSocket, redisClient, allClientSockets, data, function (_socket, message, param) {
             setTimeout(function () {
                 if (_socket.username === data.from) {
                     expect(message).to.be.equal('serverMessageToMe')

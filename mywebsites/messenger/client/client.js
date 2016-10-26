@@ -707,7 +707,13 @@ var ResetPassword = React.createClass({
                 socket.emit('resetPassword', data)
                 socket.removeAllListeners('passwordResetted')
                 socket.on('resetPasswordSuccess', function(){
-                    var url = getEnvStorage() === 'prod' ? 'http://achievendar.tk/messengerReact' : getEnvStorage() === 'dev' ? 'http://localhost:5000/messengerReact' : undefined
+                    var domain = window.location.hostname
+                    var workingLocally = domain.indexOf('localhost') > -1 || domain.indexOf('127.0.0.1' > -1)
+                    if(workingLocally){
+                        var port = 5000
+                        domain = domain + ':' + 5000
+                    }
+                    var url = 'http://' +  domain + '/messengerReact'
                     removeUsernameStorage()
                     if(url) window.location = url
                 })

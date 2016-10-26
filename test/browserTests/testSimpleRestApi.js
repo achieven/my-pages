@@ -16,6 +16,7 @@ module.exports = function(callback){
                     browser.findElements(By.css('.editPerson span')).then(function (personEl) {
                         assert.equal(0, personEl.length)
                         browser.quit()
+                        callback()
                     })
                 })
             })

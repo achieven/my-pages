@@ -134,36 +134,42 @@ var util = {
         var userEmailQuery = redisEnv + '#usernameEmail#' + username
         redisClient.exists(userEmailQuery, function(err, reply){
             if(reply === 1){
-                var transporter = nodemailer.createTransport({
-                    service: 'Gmail',
-                    auth: {
-                        user: 'achievendar.tk@gmail.com',
-                        pass: 'achievendar.tkPassword'
+                redisClient.get(userEmailQuery, function (err, email) {
+                    var transporter = nodemailer.createTransport({
+                        service: 'Gmail',
+                        auth: {
+                            user: 'achievendar.tk@gmail.com',
+                            pass: 'achievendar.tkPassword'
+                        }
+                    })
+                    
+                    var domain = process.env.NODE_ENV === 'prod' ? 'http://achievendar.tk/' : 'http://test.achievendar.tk/'
+                    if(process.env.WORKING_LOCALLY === 'yes'){
+                        domain = 'http://localhost:5000/'
                     }
-                });
-                var domain = process.env.NODE_ENV === 'prod' ? 'http://achievendar.tk/' : 'http://localhost:5000/'
-                var url = 'messengerReact/resetPassword'
-                var token = thisObject.generateToken()
-                var queryParams = '?token=' + token
-                var link = domain + url + queryParams
-                var emailText = 'Hi ' + username + '. Please click on the following link to recover your password. ' + link
-                var mailOptions = {
-                    from: 'achievendar.tk@gmail.com',
-                    to: email,
-                    subject: 'Reset password to achievendar.tk messenger',
-                    text: emailText
-                }
-                transporter.sendMail(mailOptions, function (error, info) {
-                    if (error) {
-                        console.log(error);
-                    } else {
-                        console.log('Message sent: ' + info.response);
-                        var userTokenQuery = redisEnv + '#usernameForgotPasswordToken#' + username
-                        var hashedToken = thisObject.getHashedPasswordAndSalt('', token)
-                        redisClient.set(userTokenQuery, hashedToken, function () {
-                            callback('sentResetPasswordEmail')
-                        })
+                    var url = 'messengerReact/resetPassword'
+                    var token = thisObject.generateToken()
+                    var queryParams = '?token=' + token
+                    var link = domain + url + queryParams
+                    var emailText = 'Hi ' + username + '. Please click on the following link to recover your password. ' + link
+                    var mailOptions = {
+                        from: 'achievendar.tk@gmail.com',
+                        to: email,
+                        subject: 'Reset password to achievendar.tk messenger',
+                        text: emailText
                     }
+                    transporter.sendMail(mailOptions, function (error, info) {
+                        if (error) {
+                            console.log(error);
+                        } else {
+                            console.log('Message sent: ' + info.response);
+                            var userTokenQuery = redisEnv + '#usernameForgotPasswordToken#' + username
+                            var hashedToken = thisObject.getHashedPasswordAndSalt('', token)
+                            redisClient.set(userTokenQuery, hashedToken, function () {
+                                callback('sentResetPasswordEmail')
+                            })
+                        }
+                    })
                 })
             }
             else {
