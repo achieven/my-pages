@@ -6,9 +6,11 @@ var testUserDetails = require('./testUserDetails')
 
 testBackend(function(){
     testEmitter(function(){
-        testMessenger(function(){
-            testSimpleRestApi()
-        })
+       testMessenger(function(){
+            testSimpleRestApi(function(){
+                process.exit()
+            })
+       })
     })
 })
 

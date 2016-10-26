@@ -1,11 +1,29 @@
 <!DOCTYPE html>
 <html>
-  <head>
+<head>
     <title>React Messenger </title>
-  </head>
-  <body style="background-image: url(../../assets/images/messengerBrickBackground.png); ">
-  <h2 class="loadingMessage">Please wait while page is being loaded...</h2>
-    <div id="root"></div>
-    <script src="/static/bundle.js"></script>
-  </body>
+</head>
+<body style="background-image: url(../../assets/images/messengerBrickBackground.png); ">
+
+<div class="env" val={{env}}></div>
+<div class="componentsToShow" val={{componentsToShow}}></div>
+<div class={{tokenClass}} val={{token}}></div>
+<h2 class="loadingMessage">Please wait while page is being loaded...</h2>
+<div id="root"></div>
+<script src="/static/bundle.js"></script>
+<script>
+    var env = document.getElementsByClassName('env')[0].getAttribute('val')
+    var componentsToShow = document.getElementsByClassName('componentsToShow')[0].getAttribute('val')
+    var token = document.getElementsByClassName('token').length > 0 && document.getElementsByClassName('token')[0].getAttribute('val')
+    if(env === 'dev'){
+        window.sessionStorage.setItem('componentsToShow', componentsToShow)
+        if(token) window.sessionStorage.setItem('token', token)
+    }
+    else {
+        window.localStorage.setItem('componentsToShow', componentsToShow)
+        if(token) window.localStorage.setItem('token', token)
+    }
+    window.localStorage.setItem('env', env)
+</script>
+</body>
 </html>
