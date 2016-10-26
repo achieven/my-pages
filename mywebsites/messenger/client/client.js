@@ -708,7 +708,7 @@ var ResetPassword = React.createClass({
                 socket.removeAllListeners('passwordResetted')
                 socket.on('resetPasswordSuccess', function(){
                     var domain = window.location.hostname
-                    var workingLocally = domain.indexOf('localhost') > -1 || domain.indexOf('127.0.0.1' > -1)
+                    var workingLocally = domain.indexOf('localhost') > -1 || domain.indexOf('127.0.0.1') > -1
                     if(workingLocally){
                         var port = 5000
                         domain = domain + ':' + 5000
