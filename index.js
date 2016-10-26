@@ -279,14 +279,16 @@ app.get('/simplerestapi', function (req, res) {
 app.get('/messengerReact', function (req, res) {
     var html = Handlebars.compile(fs.readFileSync('./mywebsites/messenger/index.html', 'utf8'))({
         env: process.env.NODE_ENV,
-        componentsToHide: JSON.stringify(['forgotPassword'])
+        componentsToShow: JSON.stringify(['loginAs','loginSignup'])
     })
     res.status(200).send(html)
 })
 app.get('/messengerReact/resetPassword', function(req,res){
     var html = Handlebars.compile(fs.readFileSync('./mywebsites/messenger/index.html', 'utf8'))({
         env: process.env.NODE_ENV,
-        componentsToHide: JSON.stringify(['loginAs, loginSignup'])
+        componentsToShow: JSON.stringify(['resetPassword']),
+        token: req.query.token,
+        tokenClass: 'token'
     })
     res.status(200).send(html)
 })
@@ -300,10 +302,10 @@ function messengerHelper() {
         let socketId = 0
         io.of('/messengerReact').on('connection', function (socket) {
             socketId = util.addSocket(socket, allClientSockets, socketId)
-            socket.emit('env', process.env.NODE_ENV)
             socket.removeAllListeners('signup')
             socket.removeAllListeners('login')
             socket.removeAllListeners('forgotPassword')
+            socket.removeAllListeners('resetPassword')
             socket.removeAllListeners('loginAs')
             socket.removeAllListeners('getOnlineUsers')
             socket.removeAllListeners('clientMessage')
@@ -342,6 +344,11 @@ function messengerHelper() {
             socket.on('forgotPassword',function(username){
                 util.forgotPassword(redisClient,username, function(message){
                     socket.emit(message)
+                })
+            })
+            socket.on('resetPassword', function(data){
+                util.resetPassword(redisClient, data, function(message, param){
+                    socket.emit(message, param)
                 })
             })
             socket.on('loginAs', function(username){

@@ -2,48 +2,28 @@
 <html>
 <head>
     <title>React Messenger </title>
-    <script src="../.././node_modules/jquery/dist/jquery.min.js"></script>
 </head>
 <body style="background-image: url(../../assets/images/messengerBrickBackground.png); ">
 
-<!--<div class="forgotPassword {{forgotPasswordHide}}">-->
-    <!--<div class="container">-->
-        <!--<div class="row">-->
-            <!--<div class="col-xs-3">-->
-                <!--<form className="resetPasswordForm">-->
-                    <!--<div className="row">-->
-                        <!--<label>Username</label>-->
-                        <!--<input type="text" class="form-control usernameResetPassword"/>-->
-                    <!--</div>-->
-                    <!--<div className="row">-->
-                        <!--<label>Type new password</label>-->
-                        <!--<input type="password" class="form-control passwordResetPassword1"/>-->
-                    <!--</div>-->
-                    <!--<div className="row">-->
-                        <!--<label>Re-enter Password</label>-->
-                        <!--<input type="password" class="form-control passwordResetPassword2"/>-->
-                    <!--</div>-->
-                    <!--<h4 className="row col-xs-12"></h4>-->
-                    <!--<h5 className="resetPasswordError row col-xs-12"></h5>-->
-                    <!--<button className="btn btn-success row col-xs-12" type='submit'>Reset</button>-->
-                <!--</form>-->
-            <!--</div>-->
-        <!--</div>-->
-    <!--</div>-->
-<!--</div>-->
-<h2 class="loadingMessage {{loadingMessageHide}}">Please wait while page is being loaded...</h2>
-<div id="root" class="{{rootHide}}"></div>
+<div class="env" val={{env}}></div>
+<div class="componentsToShow" val={{componentsToShow}}></div>
+<div class={{tokenClass}} val={{token}}></div>
+<h2 class="loadingMessage">Please wait while page is being loaded...</h2>
+<div id="root"></div>
 <script src="/static/bundle.js"></script>
-<script type="text/x-handlebars-template">
-    <div class="env" val={{env}}></div>
-    <div class="componentsToHide" val={{componentsToHide}}></div>
-</script>
 <script>
-    console.log($('.env'))
-    var env = $('.env').getAttribute('val')
-    var componentsToHide = $('.componentsToHide').getAttribute('val')
+    var env = document.getElementsByClassName('env')[0].getAttribute('val')
+    var componentsToShow = document.getElementsByClassName('componentsToShow')[0].getAttribute('val')
+    var token = document.getElementsByClassName('token').length > 0 && document.getElementsByClassName('token')[0].getAttribute('val')
+    if(env === 'dev'){
+        window.sessionStorage.setItem('componentsToShow', componentsToShow)
+        if(token) window.sessionStorage.setItem('token', token)
+    }
+    else {
+        window.localStorage.setItem('componentsToShow', componentsToShow)
+        if(token) window.localStorage.setItem('token', token)
+    }
     window.localStorage.setItem('env', env)
-    window.localStorage.setItem('componentsToHide', componentsToHide)
 </script>
 </body>
 </html>

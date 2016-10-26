@@ -10,22 +10,33 @@ var util = {
         return socketId
 
     },
-    generateSalt: function(){
+    generateToken: function () {
         var saltLength = 64
         var salt = ''
-        var alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%&*()-=_`~,./?:'
-        for(var i=0;i<saltLength;i++){
+        var alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
+        for (var i = 0; i < saltLength; i++) {
             var randomIndex = Math.floor(Math.random() * alphabet.length)
             var randomChar = alphabet.charAt(randomIndex)
-            salt+=randomChar
+            salt += randomChar
         }
         return salt
     },
-    checkSaltAvailability: function(redisClient, mySalt, username, callback){
+    generateSalt: function () {
+        var saltLength = 64
+        var salt = ''
+        var alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%&*()-=_`~,./?:'
+        for (var i = 0; i < saltLength; i++) {
+            var randomIndex = Math.floor(Math.random() * alphabet.length)
+            var randomChar = alphabet.charAt(randomIndex)
+            salt += randomChar
+        }
+        return salt
+    },
+    checkSaltAvailability: function (redisClient, mySalt, username, callback) {
         var thisObject = this
         var saltQuery = redisEnv + '#salt#' + mySalt
-        redisClient.exists(saltQuery, function(err, reply){
-            if(reply === 1){
+        redisClient.exists(saltQuery, function (err, reply) {
+            if (reply === 1) {
                 thisObject.tryToStoreSalt('salt already exists', null, username, redisClient, callback)
             }
             else {
@@ -33,19 +44,19 @@ var util = {
             }
         })
     },
-    storeSalt: function(redisClient, username, mySalt, callback){
+    storeSalt: function (redisClient, username, mySalt, callback) {
         var thisObject = this
         var saltQuery = redisEnv + '#salt#' + mySalt
         var saltUsernameQuery = redisEnv + '#userSalt#' + username
-        redisClient.set(saltQuery, 'doesnt matter what is inerted here', function(){
-            redisClient.set(saltUsernameQuery, mySalt, function(){
+        redisClient.set(saltQuery, 'doesnt matter what is inerted here', function () {
+            redisClient.set(saltUsernameQuery, mySalt, function () {
                 callback(mySalt)
             })
         })
     },
-    tryToStoreSalt: function(err, mySalt, username, redisClient, callback) {
+    tryToStoreSalt: function (err, mySalt, username, redisClient, callback) {
         var thisObject = this
-        if(err) {
+        if (err) {
             var salt = thisObject.generateSalt()
             thisObject.checkSaltAvailability(redisClient, salt, username, callback)
         }
@@ -53,17 +64,17 @@ var util = {
             thisObject.storeSalt(redisClient, username, mySalt, callback)
         }
     },
-    generateSaltAndStoreIt: function(redisClient,username, mainCallback){
+    generateSaltAndStoreIt: function (redisClient, username, mainCallback) {
         this.tryToStoreSalt('not really error', null, username, redisClient, mainCallback)
     },
-    hashSaltAndPasswordAndStoreIt: function(redisClient, username, password, salt, callback){
+    hashSaltAndPasswordAndStoreIt: function (redisClient, username, password, salt, callback) {
         var hashedPasswordAndSalt = this.getHashedPasswordAndSalt(password, salt)
         var queryUsername = redisEnv + '#usernamePassword#' + username
-        redisClient.set(queryUsername, hashedPasswordAndSalt, function(){
+        redisClient.set(queryUsername, hashedPasswordAndSalt, function () {
             callback()
         })
     },
-    storeEmail: function(redisClient, username, email, callback){
+    storeEmail: function (redisClient, username, email, callback) {
         var queryUserEmail = redisEnv + '#usernameEmail#' + username
         redisClient.set(queryUserEmail, email, function () {
             callback()
@@ -78,9 +89,9 @@ var util = {
                 callback('signupFail', data.username)
             }
             else {
-                thisObject.generateSaltAndStoreIt(redisClient, data.username, function(salt){
-                    thisObject.hashSaltAndPasswordAndStoreIt(redisClient, data.username, data.password, salt, function(){
-                        thisObject.storeEmail(redisClient, data.username, data.email,function(){
+                thisObject.generateSaltAndStoreIt(redisClient, data.username, function (salt) {
+                    thisObject.hashSaltAndPasswordAndStoreIt(redisClient, data.username, data.password, salt, function () {
+                        thisObject.storeEmail(redisClient, data.username, data.email, function () {
                             callback('signupSuccess', data.username)
                             callback('addOnlineUser', data.username)
                         })
@@ -91,7 +102,7 @@ var util = {
         })
     }
     ,
-    getHashedPasswordAndSalt: function(password, salt){
+    getHashedPasswordAndSalt: function (password, salt) {
         return sha256(password + salt)
     },
     login: function (redisClient, data, callback) {
@@ -100,10 +111,10 @@ var util = {
         redisClient.exists(queryUsername, function (err, reply) {
             if (reply === 1) {
                 var usernameSaltQuery = redisEnv + '#userSalt#' + data.username
-                redisClient.get(usernameSaltQuery, function(err, userSalt){
+                redisClient.get(usernameSaltQuery, function (err, userSalt) {
                     var hashedPasswordAndSaltCheck = thisObject.getHashedPasswordAndSalt(data.password, userSalt)
-                    redisClient.get(queryUsername, function(err, hashPasswordAndSaltDb){
-                        if(hashedPasswordAndSaltCheck === hashPasswordAndSaltDb){
+                    redisClient.get(queryUsername, function (err, hashPasswordAndSaltDb) {
+                        if (hashedPasswordAndSaltCheck === hashPasswordAndSaltDb) {
                             callback('loginSuccess', data.username)
                         }
                         else {
@@ -117,12 +128,12 @@ var util = {
             }
         })
     },
-    forgotPassword:function(redisClient, username, callback){
+    forgotPassword: function (redisClient, username, callback) {
         var thisObject = this
 
         var userEmailQuery = redisEnv + '#usernameEmail#' + username
-        redisClient.get(userEmailQuery, function(err, email){
-            if(!err){
+        redisClient.get(userEmailQuery, function (err, email) {
+            if (!err) {
                 var transporter = nodemailer.createTransport({
                     service: 'Gmail',
                     auth: {
@@ -130,9 +141,9 @@ var util = {
                         pass: 'achievendar.tkPassword'
                     }
                 });
-                var domain = process.env.NODE_ENV === 'prod' ? 'http://achievendar.tk/'  : 'http://localhost:5000/'
+                var domain = process.env.NODE_ENV === 'prod' ? 'http://achievendar.tk/' : 'http://localhost:5000/'
                 var url = 'messengerReact/resetPassword'
-                var token = thisObject.generateSalt()
+                var token = thisObject.generateToken()
                 var queryParams = '?token=' + token
                 var link = domain + url + queryParams
                 var emailText = 'Hi ' + username + '. Please click on the following link to recover your password. ' + link
@@ -142,17 +153,35 @@ var util = {
                     subject: 'Reset password to achievendar.tk messenger',
                     text: emailText
                 }
-                transporter.sendMail(mailOptions, function(error, info){
-                    if(error){
+                transporter.sendMail(mailOptions, function (error, info) {
+                    if (error) {
                         console.log(error);
-                    }else{
+                    } else {
                         console.log('Message sent: ' + info.response);
                         var userTokenQuery = redisEnv + '#usernameForgotPasswordToken#' + username
-                        redisClient.set(userTokenQuery, token)
-                        callback('sentResetPasswordEmail')
-                    };
+                        redisClient.set(userTokenQuery, token, function () {
+                            callback('sentResetPasswordEmail')
+                        })
+                    }
+                    ;
                 });
 
+            }
+        })
+    },
+    resetPassword: function (redisClient, data, callback) {
+        var thisObject = this
+        var userTokenQuery = redisEnv + '#usernameForgotPasswordToken#' + data.username
+        redisClient.get(userTokenQuery, function (err, token) {
+            if (token === data.token) {
+                thisObject.generateSaltAndStoreIt(redisClient, data.username, function (salt) {
+                    thisObject.hashSaltAndPasswordAndStoreIt(redisClient, data.username, data.password, salt, function () {
+                        callback('resetPasswordSuccess', data.username)
+                    })
+                })
+            }
+            else {
+                callback('resetPasswordFail', 'This is not your username, dont try to fool me!')
             }
         })
     },
@@ -279,7 +308,7 @@ var util = {
             callback('correspondenceDeleted')
         })
     },
-    removeSocket: function(socket, allClientSockets){
+    removeSocket: function (socket, allClientSockets) {
         allClientSockets = allClientSockets.filter(function (_socket) {
             return socket.socketId != _socket.socketId
         })

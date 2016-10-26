@@ -2,23 +2,55 @@ import React from 'react'
 import io from '../../../node_modules/socket.io-client/socket.io'
 var socket = io('/messengerReact')
 const $ = require('../../.././node_modules/jquery/dist/jquery.min.js')
-var clientComponent, loginAsComponent, loginSignupComponent, chatComponent
+var clientComponent, loginAsComponent, loginSignupComponent, chatComponent, resetPasswordComponent
 var Ladda = require('ladda')
 
 var setUsernameStorage = function (username) {
     if (username) {
-        window.localStorage.setItem('chatUserName', username)
-        if (localStorage.getItem('env') === 'dev') {
+        if (getEnvStorage() === 'dev') {
             window.sessionStorage.setItem('chatUserName', username)
+            return
         }
+        window.localStorage.setItem('chatUserName', username)
+        return
     }
 }
+
+var removeUsernameStorage = function(){
+    if (getEnvStorage() === 'dev') {
+        window.sessionStorage.removeItem('chatUserName')
+        return
+    }
+    window.localStorage.removeItem('chatUserName')
+    return
+}
+
 var getUsernameStorage = function () {
-    if (window.localStorage.getItem('env') === 'dev') {
+    if (getEnvStorage() === 'dev') {
         return window.sessionStorage.getItem('chatUserName')
     }
     return window.localStorage.getItem('chatUserName')
 }
+
+var getTokenStorage = function(){
+    if (getEnvStorage() === 'dev') {
+        return window.sessionStorage.getItem('token')
+    }
+    return window.localStorage.getItem('token')
+}
+
+var getComponentsToShowStorage = function(){
+    if (getEnvStorage() === 'dev') {
+        return window.sessionStorage.getItem('componentsToShow')
+    }
+    return window.localStorage.getItem('componentsToShow')
+}
+
+var getEnvStorage = function() {
+    return window.localStorage.getItem('env')
+}
+
+
 
 function escapeUnescapeHtml(text) {
     text = text.split('<').join('&lt')
@@ -32,7 +64,8 @@ var LoginAsPage = React.createClass({
         var username = getUsernameStorage()
         $('.yesLoginAs').on('click', function () {
             socket.emit('loginAs', username)
-            clientComponent.navigateToChatPage(username, 'loginAs')
+            loginAsComponent.finish()
+            clientComponent.navigateToChatPage(username)
         })
         $('.noDontLoginAs').on('click', function () {
             clientComponent.navigateToLoginSignupPage()
@@ -141,6 +174,7 @@ var LoginSignupPage = React.createClass({
             socket.removeAllListeners('loginFail')
             socket.on('loginSuccess', function (username) {
                 setUsernameStorage(username);
+                loginSignupComponent.finish()
                 clientComponent.navigateToChatPage(username, 'loginSignup');
             })
             socket.on('loginFail', function () {
@@ -181,7 +215,8 @@ var LoginSignupPage = React.createClass({
                 socket.removeAllListeners('signupSuccess')
                 socket.on('signupSuccess', function (username) {
                     setUsernameStorage(username)
-                    clientComponent.navigateToChatPage(username, 'loginSignup');
+                    loginSignupComponent.finish()
+                    clientComponent.navigateToChatPage(username);
                 })
                 socket.on('signupFail', function (username) {
                     $('.signupError').removeClass('hide')
@@ -199,9 +234,9 @@ var LoginSignupPage = React.createClass({
                 $('.loginError').text('Insert a valid username, should be between 8 and 50 characters')
             }
             else {
-                socket.emit('forgotPassword',usernameLogin)
+                socket.emit('forgotPassword', usernameLogin)
                 socket.removeAllListeners('sendRestPasswordEmail')
-                socket.on('sentResetPasswordEmail', function(){
+                socket.on('sentResetPasswordEmail', function () {
                     $('.loginError').removeClass('hide')
                     $('.loginError').text('An email with a reset password link was sent to you. We use the email you entered when signing up.')
                 })
@@ -474,7 +509,7 @@ var ChatPage = React.createClass({
         var messagesDomElements = []
         this.state.messages.forEach(function (data) {
             var color, from
-            if (window.localStorage.getItem('env') === 'dev') {
+            if (getEnvStorage() === 'dev') {
                 color = data.from === window.sessionStorage.getItem('chatUserName') ? chatComponent.colors.me : chatComponent.colors.others[(data.socketId) % (chatComponent.colors.others.length)]
                 from = data.from === window.sessionStorage.getItem('chatUserName') ? '' : data.from
             }
@@ -614,6 +649,84 @@ var ChatPage = React.createClass({
     }
 })
 
+
+var ResetPassword = React.createClass({
+    render: function () {
+        return (
+            <div className="resetPassword hide">
+                <div className="container">
+                    <div className="row">
+                        <div className="col-xs-3">
+                            <form className="resetPasswordForm">
+                                <div className="row">
+                                    <label>Username</label>
+                                    <input type="text" className="form-control usernameResetPassword"/>
+                                </div>
+                                <div className="row">
+                                    <label>Type new password</label>
+                                    <input type="password" className="form-control passwordResetPassword1"/>
+                                </div>
+                                <div className="row">
+                                    <label>Re-enter Password</label>
+                                    <input type="password" className="form-control passwordResetPassword2"/>
+                                </div>
+                                <h4 className="row col-xs-12"></h4>
+                                <h5 className="resetPasswordError row col-xs-12"></h5>
+                                <button className="btn btn-success row col-xs-12" type='submit'>Reset</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        )
+    },
+    start: function () {
+        $('.resetPassword').removeClass('hide')
+        this.resetPassword()
+    },
+    resetPassword: function () {
+        $('.resetPasswordForm').on('submit', function (e) {
+            e.preventDefault()
+            var usernameResetPassword = $('.usernameResetPassword').val()
+            var passwordResetPassword1 = $('.passwordResetPassword1').val()
+            var passwordResetPassword2 = $('.passwordResetPassword2').val()
+            if (passwordResetPassword1.length < 8) {
+                $('.resetPasswordError').removeClass('hide')
+                $('.resetPasswordError').text('Password must be at least 8 characters')
+            }
+            else if (passwordResetPassword1 != passwordResetPassword2) {
+                $('.resetPasswordError').removeClass('hide')
+                $('.resetPasswordError').text('Passwords dont match')
+            }
+            else {
+                var data = {
+                    username: usernameResetPassword,
+                    password: passwordResetPassword1,
+                    token: getTokenStorage()
+                }
+                socket.emit('resetPassword', data)
+                socket.removeAllListeners('passwordResetted')
+                socket.on('resetPasswordSuccess', function(){
+                    var url = getEnvStorage() === 'prod' ? 'http://achievendar.tk/messengerReact' : getEnvStorage() === 'dev' ? 'http://localhost:5000/messengerReact' : undefined
+                    removeUsernameStorage()
+                    if(url) window.location = url
+                })
+                socket.on('resetPasswordFail', function(message){
+                    $('.resetPasswordError').removeClass('hide')
+                    $('.resetPasswordError').text(message)
+                })
+            }
+
+        })
+    },
+    finish: function () {
+        $('.resetPassword').addClass('hide')
+    },
+    componentDidMount: function () {
+        resetPasswordComponent = this
+    }
+})
+
 var Client = React.createClass({
     render: function () {
         return (
@@ -626,6 +739,7 @@ var Client = React.createClass({
                 <link rel="stylesheet" href="./node_modules/ladda/dist/ladda.min.css"/>
                 <link href="../../../assets/css/messenger.css" rel="stylesheet"/>
                 <link href="../../../assets/css/general.css" rel="stylesheet"/>
+                <ResetPassword></ResetPassword>
                 <LoginAsPage></LoginAsPage>
                 <LoginSignupPage></LoginSignupPage>
                 <ChatPage></ChatPage>
@@ -634,20 +748,31 @@ var Client = React.createClass({
     },
     start: function () {
         $('.loadingMessage').addClass('hide')
-        clientComponent.adjustElementsToDeviceType();
-        clientComponent.sendUserDetails();
-        socket.removeAllListeners('env')
-        socket.on('env', function (env) {
-            window.localStorage.setItem('env', env)
-        })
-        var storageUsername = getUsernameStorage()
-        if (storageUsername) {
-            clientComponent.navigateToLoginAsPage()
-        }
-        else {
-            clientComponent.navigateToLoginSignupPage()
-        }
+        clientComponent.adjustElementsToDeviceType()
+        clientComponent.sendUserDetails()
 
+
+        var componentToShowString = getComponentsToShowStorage()
+        var componentsToShow = JSON.parse(componentToShowString)
+
+        if(componentsToShow && componentsToShow.length > 0){
+            if (componentsToShow[0] === 'resetPassword') {
+                clientComponent.navigateToResetPasswordPage()
+            }
+            else if (componentsToShow[0] === 'loginAs' && componentsToShow[1] === 'loginSignup') {
+                var storageUsername = getUsernameStorage()
+                if (storageUsername) {
+                    clientComponent.navigateToLoginAsPage()
+                }
+                else {
+                    clientComponent.navigateToLoginSignupPage()
+                }
+            }
+        }
+        
+    },
+    navigateToResetPasswordPage: function () {
+        resetPasswordComponent.start()
     },
     navigateToLoginAsPage: function () {
         loginAsComponent.start()
@@ -656,17 +781,7 @@ var Client = React.createClass({
         loginAsComponent.finish()
         loginSignupComponent.start()
     },
-    navigateToChatPage: function (username, previousPage) {
-        switch (previousPage) {
-            case 'loginAs':
-                loginAsComponent.finish()
-                break
-            case 'loginSignup':
-                loginSignupComponent.finish()
-                break
-            default:
-                break
-        }
+    navigateToChatPage: function (username) {
         chatComponent.start(username)
     },
     adjustElementsToDeviceType: function () {
