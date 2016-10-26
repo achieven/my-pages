@@ -246,6 +246,10 @@ describe('login', function () {
     })
 })
 
+describe('forgotPassword', function(){
+    it('should fail when ')
+})
+
 describe('getOnlineUsers', function () {
     it('should return a list of all usernames and new messages zero and emit it to the client', function (done) {
         var allClientSockets = [{username: 1}, {username: 2}]

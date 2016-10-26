@@ -132,8 +132,8 @@ var util = {
         var thisObject = this
 
         var userEmailQuery = redisEnv + '#usernameEmail#' + username
-        redisClient.get(userEmailQuery, function (err, email) {
-            if (!err) {
+        redisClient.exists(userEmailQuery, function(err, reply){
+            if(reply === 1){
                 var transporter = nodemailer.createTransport({
                     service: 'Gmail',
                     auth: {
@@ -159,13 +159,15 @@ var util = {
                     } else {
                         console.log('Message sent: ' + info.response);
                         var userTokenQuery = redisEnv + '#usernameForgotPasswordToken#' + username
-                        redisClient.set(userTokenQuery, token, function () {
+                        var hashedToken = thisObject.getHashedPasswordAndSalt('', token)
+                        redisClient.set(userTokenQuery, hashedToken, function () {
                             callback('sentResetPasswordEmail')
                         })
                     }
-                    ;
-                });
-
+                })
+            }
+            else {
+                callback('sentResetPasswordEmail')
             }
         })
     },
@@ -173,10 +175,12 @@ var util = {
         var thisObject = this
         var userTokenQuery = redisEnv + '#usernameForgotPasswordToken#' + data.username
         redisClient.get(userTokenQuery, function (err, token) {
-            if (token === data.token) {
+            if (token === thisObject.getHashedPasswordAndSalt('',data.token)) {
                 thisObject.generateSaltAndStoreIt(redisClient, data.username, function (salt) {
                     thisObject.hashSaltAndPasswordAndStoreIt(redisClient, data.username, data.password, salt, function () {
-                        callback('resetPasswordSuccess', data.username)
+                        redisClient.del(userTokenQuery, function(){
+                            callback('resetPasswordSuccess', data.username)  
+                        })
                     })
                 })
             }
