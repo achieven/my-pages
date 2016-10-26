@@ -179,6 +179,7 @@ var LoginSignupPage = React.createClass({
             })
             socket.on('loginFail', function () {
                 $('.loginError').removeClass('hide')
+                $('.loginError').text('No such username and password')
             })
         })
     },
