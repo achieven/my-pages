@@ -148,7 +148,7 @@ let Emitter = React.createClass({
         };
     },
     componentDidMount: function () {
-        $('body').attr('style', "background-image: url(http://supernovathemes.com/wp-content/themes/supernovathemes/images/bg/b9.png);")
+        $('body').attr('style', "background-image: url(../../../assets/images/emitter_background.png);")
         let socket = io.connect('/emitterPage');
         $('#emitFrequencyForm').submit(function (event) {
             event.preventDefault();
