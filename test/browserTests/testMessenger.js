@@ -4,13 +4,14 @@ module.exports = function (callback) {
     const assert = require('assert')
     const redis = require('redis');
     const redisClient = redis.createClient();
+    var redisEnv = 'dev'
 
     var webdriver = require('selenium-webdriver'), By = webdriver.By
     var browser = new webdriver.Builder().usingServer().withCapabilities({'browserName': 'firefox'}).build()
 
-    redisClient.set('devusernamea_random_user','blahblahblah')
-    redisClient.del('devusernamea_random_user1')
-    redisClient.del('devgroupChata_random_user1')
+    redisClient.set('dev#usernamePassword#a_random_user','blahblahblah')
+    redisClient.del(redisEnv + '#usernamePassword#a_random_user1')
+    redisClient.del(redisEnv + '#groupChat#a_random_user1')
 
     function deleteChat(browser) {
         browser.findElement(By.className('deleteCorrespondence')).click().then(function () {
@@ -125,11 +126,15 @@ module.exports = function (callback) {
             browser.get('http://localhost:5000/messengerReact')
 
             function signupSuccess() {
-                browser.findElement(By.css('.signupForm button')).click().then(function () {
-                    browser.findElement(By.className('h3VerticalMiddle')).then(function (helloUsernameEl) {
-                        helloUsernameEl.getText().then(function (helloUsernameText) {
-                            assert.equal('Hello a_random_user1!', helloUsernameText)
-                            loginAs(browser)
+                browser.findElement(By.className('emailSignup')).then(function(email){
+                    email.sendKeys('achievendar.tk@gmail.com').then(function(){
+                        browser.findElement(By.css('.signupForm button')).click().then(function () {
+                            browser.findElement(By.className('h3VerticalMiddle')).then(function (helloUsernameEl) {
+                                helloUsernameEl.getText().then(function (helloUsernameText) {
+                                    assert.equal('Hello a_random_user1!', helloUsernameText)
+                                    loginAs(browser)
+                                })
+                            })
                         })
                     })
                 })
@@ -188,7 +193,7 @@ module.exports = function (callback) {
                         browser.findElement(By.css('.signupForm button')).click().then(function () {
                             browser.findElement(By.className('signupError')).then(function (signupErrorEl) {
                                 signupErrorEl.getText().then(function (signupErrorText) {
-                                    assert.equal('Username must be between 8 and 15 letters', signupErrorText)
+                                    assert.equal('Username must be between 8 and 50 characters', signupErrorText)
                                     username.sendKeys('_random_user').then(function () {
                                         signupShortPassword()
                                     })
