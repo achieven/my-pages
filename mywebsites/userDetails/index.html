@@ -131,7 +131,7 @@
         getAndRenderChart('cpu')
 
     }
-    $.get("http://ipinfo.io", function (response) {
+    $.get("https://ipinfo.io", function (response) {
         $('.ipAddress').text(response.ip)
         $('.hostname').text(response.hostname)
         $('.country').text(response.country)
