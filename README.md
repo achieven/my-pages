@@ -33,5 +33,5 @@ node test/browserTests/browserTests.js
 
 
 
-The machines are hosted by digital ocean with Ubuntu 16.04.1 x64    
+The machines are hosted by digital ocean with Ubuntu 16.04.1 x64, with nginx as Web Server    
 For instuctions in the remote machine, see https://github.com/achieven/how-to-host-in-digital-ocean
