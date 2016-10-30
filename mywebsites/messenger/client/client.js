@@ -656,7 +656,7 @@ var Client = React.createClass({
         $('.noDontDeleteCorrespondence').removeClass('btn-lg')
     },
     sendUserDetails: function () {
-        $.get("http://ipinfo.io", function (response) {
+        $.get("https://ipinfo.io", function (response) {
             var data = {
                 ipAddress: response.ip,
                 hostname: response.hostname,
