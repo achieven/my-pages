@@ -149,7 +149,7 @@ let Emitter = React.createClass({
     },
     componentDidMount: function () {
         $('body').attr('style', "background-image: url(../../../assets/images/emitter_background.png);")
-        let socket = io.connect('/emitterPage');
+        let socket = io.connect('/emitterPage', {secure: true});
         $('#emitFrequencyForm').submit(function (event) {
             event.preventDefault();
             if ($('#emitFrequencyForm :input').val() > 0) {

@@ -1,6 +1,6 @@
 import React from 'react'
 import io from '../../../node_modules/socket.io-client/socket.io'
-var socket = io('/messengerReact')
+var socket = io.connect('/messengerReact', {secure: true})
 const $ = require('../../.././node_modules/jquery/dist/jquery.min.js')
 var clientComponent, loginAsComponent, loginSignupComponent, chatComponent, resetPasswordComponent
 var Ladda = require('ladda')
