@@ -165,7 +165,7 @@ let Emitter = React.createClass({
         });
         $('.loadingMessage').addClass('hide')
         $('.form').removeClass('hide')
-        $.get("http://ipinfo.io", function (response) {
+        $.get("https://ipinfo.io", function (response) {
             var data = {
                 ipAddress: response.ip,
                 hostname: response.hostname,
