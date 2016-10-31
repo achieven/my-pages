@@ -230,9 +230,9 @@ var LoginSignupPage = React.createClass({
         $('.forgotPasswordBtn').on('click', function (e) {
             e.preventDefault()
             var usernameLogin = $('.usernameLogin').val()
-            if (usernameLogin.length < 8 || usernameLogin.length > 50) {
+            if (usernameLogin.length < 8 || usernameLogin.length > 15) {
                 $('.loginError').removeClass('hide')
-                $('.loginError').text('Insert a valid username, should be between 8 and 50 characters')
+                $('.loginError').text('Insert a valid username, should be between 8 and 15 characters')
             }
             else {
                 socket.emit('forgotPassword', usernameLogin)
