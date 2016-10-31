@@ -515,17 +515,17 @@ var ChatPage = React.createClass({
         return onlineUsers
     },
     buildMessagesToRender: function () {
+        var usernamesColors = {}
+        Array.from(new Set(this.state.messages.map(function(data){
+            return data.from
+        }))).forEach(function(username, index){
+            usernamesColors[username] = chatComponent.colors.others[index % chatComponent.colors.others.length]
+        })
         var messagesDomElements = []
         this.state.messages.forEach(function (data) {
-            var color, from
-            if (getEnvStorage() === 'dev') {
-                color = data.from === window.sessionStorage.getItem('chatUserName') ? chatComponent.colors.me : chatComponent.colors.others[(data.socketId) % (chatComponent.colors.others.length)]
-                from = data.from === window.sessionStorage.getItem('chatUserName') ? '' : data.from
-            }
-            else {
-                color = data.from === window.localStorage.getItem('chatUserName') ? chatComponent.colors.me : chatComponent.colors.others[(data.socketId) % (chatComponent.colors.others.length)]
-                from = data.from === window.localStorage.getItem('chatUserName') ? '' : data.from
-            }
+            var color = data.from === getUsernameStorage() ? chatComponent.colors.me : usernamesColors[data.from]
+            var from = data.from === getUsernameStorage() ? '' : data.from
+         
 
             messagesDomElements.push(
                 <MessageLine key={chatComponent.messageKey++} message={data.message} from={from}
