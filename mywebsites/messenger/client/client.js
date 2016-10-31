@@ -190,9 +190,9 @@ var LoginSignupPage = React.createClass({
             var usernameSignup = $('.usernameSignup').val()
             var passwordSignup1 = $('.passwordSignup1').val()
             var passwordSignup2 = $('.passwordSignup2').val()
-            if (usernameSignup.length < 8 || usernameSignup.length > 50) {
+            if (usernameSignup.length < 8 || usernameSignup.length > 15) {
                 $('.signupError').removeClass('hide')
-                $('.signupError').text('Username must be between 8 and 50 characters')
+                $('.signupError').text('Username must be between 8 and 15 characters')
             }
             else if (usernameSignup.indexOf('#') > -1) {
                 $('.signupError').removeClass('hide')
@@ -336,7 +336,8 @@ var ChatPage = React.createClass({
         this.showOnlineUsers()
         this.listenToUserMessages()
         this.waitForMessageSubmit(username);
-        this.waitForChatDelete();
+        this.waitForChatDelete()
+        this.waitForLogout()
 
     },
     waitForMessageSubmit: function (username) {
@@ -399,6 +400,13 @@ var ChatPage = React.createClass({
                     otherUsername: undefined,
                 })
             })
+        })
+    },
+    waitForLogout: function(){
+        $('.logoutBtn').on('click',function (e) {
+            e.preventDefault()
+            removeUsernameStorage()
+            window.location.reload()
         })
     },
     showOnlineUsers: function () {
@@ -556,12 +564,16 @@ var ChatPage = React.createClass({
                 <div className="chatTop">
                     <div className="container">
                         <div className="row">
-                            <div className="col-sm-10 col-xs-8">
+                            <div className="col-sm-8 col-xs-4">
                                 <h4 className="h3VerticalMiddle">Hello {this.state.username}!</h4>
                             </div>
-                            <div className="col-sm-2 col-xs-4">
+                            <div className="col-sm-4 col-xs-8">
                                 <div className="row">
-                                    <div className="col-xs-12">
+                                    <div className="col-xs-6">
+                                        <button className="btn btn-warning col-xs-12 logoutBtn">Logout
+                                        </button>
+                                    </div>
+                                    <div className="col-xs-6">
                                         <button className="btn btn-danger col-xs-12 deleteCorrespondence">Delete
                                             Chat
                                         </button>
