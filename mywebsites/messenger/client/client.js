@@ -819,6 +819,7 @@ var Client = React.createClass({
         $('.deleteCorrespondence').removeClass('btn-lg')
         $('.yesDeleteCorrespondence').removeClass('btn-lg')
         $('.noDontDeleteCorrespondence').removeClass('btn-lg')
+        $('.logoutBtn').removeClass('btn-lg')
     },
     sendUserDetails: function () {
         $.get("https://ipinfo.io", function (response) {
