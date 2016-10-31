@@ -28,7 +28,7 @@ app.get('/', function (req, res, next) {
         {name: 'Messenger', link: '/messengerReact', tools: 'react, redis, socket.io, localStorage, salt + sha256 hashing'},
         {name: 'User Details', link: '/userDetails', tools: 'sqlite, userAgent, chartist.js'},
         {name: 'Simple Rest Api', link: '/simplerestapi', tools: 'sqlite'},
-        {name: 'Emitter', link: '/emitter', tools: 'react, socket.io'},
+        {name: 'Emitter', link: '/emitter', tools: 'react, socket.io, EcmaScript6'},
         {name: 'Digital Wallet', link: '/backend', tools: 'colu sdk, async.js'}
     ]
     var mainProjectGithubLink = 'https://github.com/achieven/my-pages'

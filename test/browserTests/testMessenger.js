@@ -13,6 +13,18 @@ module.exports = function (callback) {
     redisClient.del(redisEnv + '#usernamePassword#a_random_user1')
     redisClient.del(redisEnv + '#groupChat#a_random_user1')
 
+    function logout(browser){
+        browser.findElement(By.className('logoutBtn')).click().then(function(){
+            browser.sleep(5000).then(function(){
+                browser.findElement(By.className('usernameLogin')).then(function () {
+                    browser.quit()
+                    callback()
+                })
+            })
+        })
+        
+    }
+
     function deleteChat(browser) {
         browser.findElement(By.className('deleteCorrespondence')).click().then(function () {
             browser.sleep(1000)
@@ -21,8 +33,8 @@ module.exports = function (callback) {
                 browser.findElements(By.css('.table h6')).then(function (messageEl) {
                     assert.equal(0, messageEl.length)
                     redisClient.del('devusernamea_random_user1', function(){
-                        browser.quit()
-                        callback()
+                        logout(browser)
+
                     })
                 })
             })
@@ -44,7 +56,7 @@ module.exports = function (callback) {
             })
         })
     }
-    
+
 
     function writeMessage(browser) {
         browser.findElement(By.css('.messageForm input')).then(function (input) {
@@ -104,7 +116,7 @@ module.exports = function (callback) {
                 login(browser)
             })
         }
-        
+
         function yesLoginAs(){
             browser.get('http://localhost:5000/messengerReact')
             browser.findElement(By.className('yesLoginAs')).click().then(function(){
@@ -116,9 +128,9 @@ module.exports = function (callback) {
                 })
             })
         }
-        
+
         yesLoginAs()
-        
+
     }
 
     function testMessenger(browser) {
@@ -193,7 +205,7 @@ module.exports = function (callback) {
                         browser.findElement(By.css('.signupForm button')).click().then(function () {
                             browser.findElement(By.className('signupError')).then(function (signupErrorEl) {
                                 signupErrorEl.getText().then(function (signupErrorText) {
-                                    assert.equal('Username must be between 8 and 50 characters', signupErrorText)
+                                    assert.equal('Username must be between 8 and 15 characters', signupErrorText)
                                     username.sendKeys('_random_user').then(function () {
                                         signupShortPassword()
                                     })
@@ -207,56 +219,8 @@ module.exports = function (callback) {
             signupShortUsername()
         }
 
-            
 
-            //     browser.findElement(By.className('usernameSignup')).then(function (username) {
-            //         username.sendKeys('a').then(function () {
-            //             browser.findElement(By.className('passwordSignup1')).then(function (password1) {
-            //                 password1.sendKeys('b').then(function () {
-            //                     browser.findElement(By.className('passwordSignup2')).then(function (password2) {
-            //                         browser.findElement(By.css('.signupForm button')).click().then(function () {
-            //                             browser.findElement(By.className('signupError')).then(function (signupErrorEl1) {
-            //                                 signupErrorEl1.getText().then(function (signupErrorText1) {
-            //                                     assert.equal('Username must be between 8 and 15 letters', signupErrorText1)
-            //
-            //                                     password2.sendKeys('b').then(function () {
-            //                                         browser.findElement(By.css('.signupForm button')).click().then(function () {
-            //                                             browser.findElement(By.className('signupError')).then(function (signupErrorEl2) {
-            //                                                 signupErrorEl2.getText().then(function (signupErrorText2) {
-            //                                                     assert.equal('Username a is not available', signupErrorText2)
-            //                                                     browser.findElement(By.className('usernameSignup')).then(function (username) {
-            //                                                         username.sendKeys('random user name').then(function () {
-            //                                                             browser.findElement(By.className('passwordSignup1')).then(function (password1) {
-            //                                                                 password1.sendKeys('random password').then(function () {
-            //                                                                     browser.findElement(By.className('passwordSignup2')).then(function (password2) {
-            //                                                                         password2.sendKeys('random password').then(function () {
-            //                                                                             browser.findElement(By.css('.signupForm button')).click().then(function () {
-            //                                                                                 browser.findElement(By.css('h3')).then(function (helloUsernameEl) {
-            //                                                                                     helloUsernameEl.getText().then(function (helloUsernameText) {
-            //                                                                                         assert.equal('Hello arandom user name!', helloUsernameText)
-            //                                                                                         login(browser)
-            //                                                                                     })
-            //                                                                                 })
-            //                                                                             })
-            //                                                                         })
-            //                                                                     })
-            //                                                                 })
-            //                                                             })
-            //                                                         })
-            //                                                     })
-            //                                                 })
-            //                                             })
-            //                                         })
-            //                                     })
-            //                                 })
-            //                             })
-            //                         })
-            //                     })
-            //                 })
-            //             })
-            //         })
-            //     })
-            // }
+
 
             signup(browser)
         }
