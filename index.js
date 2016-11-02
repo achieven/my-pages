@@ -29,7 +29,8 @@ app.get('/', function (req, res, next) {
         {name: 'User Details', link: '/userDetails', tools: 'sqlite, userAgent, chartist.js'},
         {name: 'Simple Rest Api', link: '/simplerestapi', tools: 'sqlite'},
         {name: 'Emitter', link: '/emitter', tools: 'react, socket.io, EcmaScript6'},
-        {name: 'Digital Wallet', link: '/backend', tools: 'colu sdk, async.js'}
+        {name: 'Digital Wallet', link: '/backend', tools: 'colu sdk, async.js'},
+        {name: 'Leaflet trips (Only link to source code at the moment)', link: 'https://github.com/achieven/leaflet', tools: 'Angular2, Typescript, Leaflet.js'}
     ]
     var mainProjectGithubLink = 'https://github.com/achieven/my-pages'
     var html = Handlebars.compile(fs.readFileSync('./app.html', 'utf8'))({
