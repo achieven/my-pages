@@ -25,12 +25,20 @@ app.use(bodyParser.urlencoded({extended: true}));
 
 app.get('/', function (req, res, next) {
     var projects = [
-        {name: 'Messenger', link: '/messengerReact', tools: 'react, redis, socket.io, localStorage, salt + sha256 hashing'},
-        {name: 'User Details', link: '/userDetails', tools: 'sqlite, userAgent, chartist.js'},
+        {
+            name: 'Messenger',
+            link: '/messengerReact',
+            tools: 'react, redis, socket.io, localStorage, salt + sha256 hashing'
+        },
+        {name: 'User Details', link: '/userDetails', tools: 'redis, userAgent, chartist.js'},
         {name: 'Simple Rest Api', link: '/simplerestapi', tools: 'sqlite'},
         {name: 'Emitter', link: '/emitter', tools: 'react, socket.io, EcmaScript6'},
         {name: 'Digital Wallet', link: '/backend', tools: 'colu sdk, async.js'},
-        {name: 'Leaflet trips (Only link to source code at the moment)', link: 'https://github.com/achieven/leaflet', tools: 'Angular2, Typescript, Leaflet.js'}
+        {
+            name: 'Leaflet trips (Only link to source code at the moment)',
+            link: 'https://github.com/achieven/leaflet',
+            tools: 'Angular2, Typescript, Leaflet.js'
+        }
     ]
     var mainProjectGithubLink = 'https://github.com/achieven/my-pages'
     var html = Handlebars.compile(fs.readFileSync('./app.html', 'utf8'))({
@@ -46,6 +54,7 @@ server.listen(port, function () {
     console.log('listening on port', port)
 });
 const io = socketio(server);
+var redisEnv = process.env.NODE_ENV
 
 app.get('/emitter', function (req, res) {
 
@@ -280,11 +289,11 @@ app.get('/simplerestapi', function (req, res) {
 app.get('/messengerReact', function (req, res) {
     var html = Handlebars.compile(fs.readFileSync('./mywebsites/messenger/index.html', 'utf8'))({
         env: process.env.NODE_ENV,
-        componentsToShow: JSON.stringify(['loginAs','loginSignup'])
+        componentsToShow: JSON.stringify(['loginAs', 'loginSignup'])
     })
     res.status(200).send(html)
 })
-app.get('/messengerReact/resetPassword', function(req,res){
+app.get('/messengerReact/resetPassword', function (req, res) {
     var html = Handlebars.compile(fs.readFileSync('./mywebsites/messenger/index.html', 'utf8'))({
         env: process.env.NODE_ENV,
         componentsToShow: JSON.stringify(['resetPassword']),
@@ -313,13 +322,14 @@ function messengerHelper() {
             socket.removeAllListeners('deleteCorrespondence')
             socket.removeAllListeners('openPrivateChat')
             socket.removeAllListeners('openGroupChat')
-            
 
-            function keepSocketAlive(){
-                setInterval(function(){
+
+            function keepSocketAlive() {
+                setInterval(function () {
                     socket.emit('heartbeat')
-                },3000)
+                }, 3000)
             }
+
             keepSocketAlive()
 
             function mockSslCertificate() {
@@ -328,6 +338,7 @@ function messengerHelper() {
                     socket.emit('yesTrustMe')
                 })
             }
+
             mockSslCertificate();
             socket.on('signup', function (data) {
                 util.signup(redisClient, data, function (message, param) {
@@ -342,23 +353,23 @@ function messengerHelper() {
                     socket.emit('addOnlineUser', socket.username)
                 })
             })
-            socket.on('forgotPassword',function(username){
+            socket.on('forgotPassword', function (username) {
                 console.log(username)
-                util.forgotPassword(redisClient,username, function(message){
+                util.forgotPassword(redisClient, username, function (message) {
                     socket.emit(message)
                 })
             })
-            socket.on('resetPassword', function(data){
-                util.resetPassword(redisClient, data, function(message, param){
+            socket.on('resetPassword', function (data) {
+                util.resetPassword(redisClient, data, function (message, param) {
                     socket.emit(message, param)
                 })
             })
-            socket.on('loginAs', function(username){
+            socket.on('loginAs', function (username) {
                 socket.username = username
                 socket.emit('addOnlineUser', username)
             })
-            socket.on('getOnlineUsers', function(){
-                util.getOnlineUsers(allClientSockets, function(_socket, message, param){
+            socket.on('getOnlineUsers', function () {
+                util.getOnlineUsers(allClientSockets, function (_socket, message, param) {
                     _socket.username && _socket.emit(message, param)
                 })
             })
@@ -372,21 +383,21 @@ function messengerHelper() {
                     socket.emit(message)
                 })
             })
-            socket.on('openPrivateChat', function(chatParticipants){
-                util.openPrivateChat(redisClient, chatParticipants, function(message, param){
+            socket.on('openPrivateChat', function (chatParticipants) {
+                util.openPrivateChat(redisClient, chatParticipants, function (message, param) {
                     socket.emit(message, param)
                 })
             })
-            socket.on('openGroupChat', function(username){
-                util.openGroupChat(redisClient, username, function(message, param){
+            socket.on('openGroupChat', function (username) {
+                util.openGroupChat(redisClient, username, function (message, param) {
                     socket.emit(message, param)
                 })
             })
             socket.on('disconnect', function () {
                 console.log(socket.username, 'disconnecting')
-                serverLogger.log('info',socket.username + ' disconnecting')
+                serverLogger.log('info', socket.username + ' disconnecting')
                 allClientSockets = util.removeSocket(socket, allClientSockets)
-                util.getOnlineUsers(allClientSockets, function(_socket, message, param){
+                util.getOnlineUsers(allClientSockets, function (_socket, message, param) {
                     _socket.username && _socket.emit(message, param)
                 })
             })
@@ -407,147 +418,195 @@ function buildPage() {
 }
 
 buildPage()
-app.get('/userDetails', function (req, res) {
-    const parser = new userAgentParser()
-    const parsedUserAgent = parser.setUA(req.headers['user-agent']).getResult()
-    var browser = parsedUserAgent.browser, browserName = browser.name, browserVersion = browser.version
-    var engine = parsedUserAgent.engine, engineName = engine.name, engineVersion = engine.version
-    var os = parsedUserAgent.os, osName = os.name, osVersion = os.version
-    var device = parsedUserAgent.device, deviceModel = device.model, deviceVendor = device.vendor, deviceType = device.type
-    var cpu = parsedUserAgent.cpu, cpuArchitecture = cpu.architecture
+var redis = require('redis');
+var redisClient = redis.createClient();
+redisClient.on('connect', function () {
 
-    var html = Handlebars.compile(fs.readFileSync('./mywebsites/userDetails/index.html', 'utf8'))({
-        contents: {
-            ipinfo: {
-                ipAddress: {header: 'IP address', classname: 'ipAddress'},
-                hostname: {header: 'Host Name', classname: 'hostname'},
-                country: {header: 'Country', classname: 'country'},
-                city: {header: 'City', classname: 'city'},
-                loc: {header: 'Coordinates', classname: 'loc'},
-                org: {header: 'Internet Provider', classname: 'org'},
-                region: {header: 'Region', classname: 'region'},
-            },
-            userAgentInfo: {
-                browser: {
-                    header: 'Browser',
-                    content: {
-                        name: {header: 'Name', content: browserName},
-                        version: {header: 'Version', content: browserVersion}
-                    }
+    app.get('/userDetails', function (req, res) {
+
+
+        const parser = new userAgentParser()
+        const parsedUserAgent = parser.setUA(req.headers['user-agent']).getResult()
+        var browser = parsedUserAgent.browser, browserName = browser.name, browserVersion = browser.version
+        var engine = parsedUserAgent.engine, engineName = engine.name, engineVersion = engine.version
+        var os = parsedUserAgent.os, osName = os.name, osVersion = os.version
+        var device = parsedUserAgent.device, deviceModel = device.model, deviceVendor = device.vendor, deviceType = device.type
+        var cpu = parsedUserAgent.cpu, cpuArchitecture = cpu.architecture
+
+        var html = Handlebars.compile(fs.readFileSync('./mywebsites/userDetails/index.html', 'utf8'))({
+            contents: {
+                ipinfo: {
+                    ipAddress: {header: 'IP address', classname: 'ipAddress'},
+                    hostname: {header: 'Host Name', classname: 'hostname'},
+                    country: {header: 'Country', classname: 'country'},
+                    city: {header: 'City', classname: 'city'},
+                    loc: {header: 'Coordinates', classname: 'loc'},
+                    org: {header: 'Internet Provider', classname: 'org'},
+                    region: {header: 'Region', classname: 'region'},
                 },
-                engine: {
-                    header: 'Engine',
-                    content: {
-                        name: {header: 'Name', content: engineName},
-                        version: {header: 'Version', content: engineVersion}
-                    }
+                userAgentInfo: {
+                    browser: {
+                        header: 'Browser',
+                        content: {
+                            name: {header: 'Name', content: browserName},
+                            version: {header: 'Version', content: browserVersion}
+                        }
+                    },
+                    engine: {
+                        header: 'Engine',
+                        content: {
+                            name: {header: 'Name', content: engineName},
+                            version: {header: 'Version', content: engineVersion}
+                        }
+                    },
+                    os: {
+                        header: 'Operating System',
+                        content: {
+                            name: {header: 'Name', content: osName},
+                            version: {header: 'Version', content: osVersion}
+                        }
+                    },
+                    device: {
+                        header: 'Device',
+                        content: {
+                            model: {header: 'Model', content: deviceModel},
+                            vendor: {header: 'Vendor', content: deviceVendor},
+                            type: {header: 'Type', content: deviceType}
+                        }
+                    },
+                    cpu: {header: 'Cpu', content: {architecture: {header: 'Architecture', content: cpuArchitecture}}}
                 },
-                os: {
-                    header: 'Operating System',
-                    content: {name: {header: 'Name', content: osName}, version: {header: 'Version', content: osVersion}}
-                },
-                device: {
-                    header: 'Device',
-                    content: {
-                        model: {header: 'Model', content: deviceModel},
-                        vendor: {header: 'Vendor', content: deviceVendor},
-                        type: {header: 'Type', content: deviceType}
-                    }
-                },
-                cpu: {header: 'Cpu', content: {architecture: {header: 'Architecture', content: cpuArchitecture}}}
-            },
-            statisticsInfo: 
-                {
+                statisticsInfo: {
                     browser: {header: 'Browser'},
                     engine: {header: 'Engine'},
                     os: {header: 'OS'},
                     device: {header: 'Device'},
                     cpu: {header: 'Cpu'}
                 }
-            
-        }
-    });
-    res.send(html);
 
-    app.get('/userDetails/userdata/browser', function (req, res) {
-        var query = 'SELECT browserName FROM userdata'
-        db.all(query, function (err, usersdata) {
-            if (err) return res.status(err.code || err.status || 500).send(err)
-            return res.status(200).send(usersdata)
-        })
-    })
-    app.get('/userDetails/userdata/engine', function (req, res) {
-        var query = 'SELECT engineName FROM userdata'
-        db.all(query, function (err, usersdata) {
-            if (err) return res.status(err.code || err.status || 500).send(err)
-            return res.status(200).send(usersdata)
-        })
-    })
-    app.get('/userDetails/userdata/os', function (req, res) {
-        var query = 'SELECT osName FROM userdata'
-        db.all(query, function (err, usersdata) {
-            if (err) return res.status(err.code || err.status || 500).send(err)
-            return res.status(200).send(usersdata)
-        })
-    })
-    app.get('/userDetails/userdata/device', function (req, res) {
-        var query = 'SELECT deviceModel, deviceVendor FROM userdata'
-        db.all(query, function (err, usersdata) {
-            if (err) return res.status(err.code || err.status || 500).send(err)
-            return res.status(200).send(usersdata)
-        })
-    })
-    app.get('/userDetails/userdata/cpu', function (req, res) {
-        var query = 'SELECT cpuArchitecture FROM userdata'
-        db.all(query, function (err, usersdata) {
-            if (err) return res.status(err.code || err.status || 500).send(err)
-            return res.status(200).send(usersdata)
-        })
-    })
-})
+            }
+        });
+        res.send(html);
 
-const sqlite = require('sqlite3').verbose()
-var db = new sqlite.Database('./mywebsites/userDetails/' + process.env.NODE_ENV + '-user-details.db')
-db.serialize(function () {
-    var query = 'CREATE TABLE if not exists userdata (ipUserAgent varchar NOT NULL PRIMARY KEY, ip varchar, hostname varchar, country varchar, city varchar, loc varchar, org varchar, region varchar, browserName varchar, browserVersion varchar, engineName varchar, engineVersion varchar, osName varchar, osVersion varchar, deviceModel varchar, deviceVendor varchar, deviceType varchar, cpuArchitecture varchar)'
-    db.run(query)
-})
-
-app.post('/userDetails/userdata', function (req, res) {
-    const parser = new userAgentParser()
-    const parsedUserAgent = parser.setUA(req.headers['user-agent']).getResult()
-    var browser = parsedUserAgent.browser, browserName = browser.name, browserVersion = browser.version
-    var engine = parsedUserAgent.engine, engineName = engine.name, engineVersion = engine.version
-    var os = parsedUserAgent.os, osName = os.name, osVersion = os.version
-    var device = parsedUserAgent.device, deviceModel = device.model, deviceVendor = device.vendor, deviceType = device.type
-    var cpu = parsedUserAgent.cpu, cpuArchitecture = cpu.architecture
-    var ipUserAgent = req.body.ipAddress + osName + osVersion + engineName + engineVersion + browserName + browserVersion
-    var ipExistsQuery = 'SELECT ipUserAgent from userdata'
-    db.all(ipExistsQuery, function (err, allIpUserAgents) {
-        serverLogger.log('info', 'ipUserAgent: ' + ipUserAgent + ' allIpUserAgents:' + JSON.stringify(allIpUserAgents))
-        if (allIpUserAgents.map(function (_ipUserAgent) {
-                return _ipUserAgent.ipUserAgent
-            }).indexOf(ipUserAgent) < 0) {
-            var query = 'INSERT INTO userdata (ipUserAgent, ip, hostname, country, city, loc, org, region, browserName, browserVersion, engineName, engineVersion, osName, osVersion, deviceModel, deviceVendor, deviceType,  cpuArchitecture) VALUES ( ' +
-                JSON.stringify(ipUserAgent) + ', ' + (JSON.stringify(req.body.ipAddress || "")) + ', ' + (JSON.stringify(req.body.hostname || "")) + ', ' + (JSON.stringify(req.body.country || "")) + ', ' + (JSON.stringify(req.body.city || "")) + ', ' + (JSON.stringify(req.body.loc || "")) + ', ' + (JSON.stringify(req.body.org || "")) + ', ' + (JSON.stringify(req.body.region || "")) + ', ' +
-                (JSON.stringify(browserName || "")) + ', ' + (JSON.stringify(browserVersion || "")) + ', ' + (JSON.stringify(engineName || "")) + ', ' + (JSON.stringify(engineVersion || "")) + ', ' + (JSON.stringify(osName || "")) + ', ' + (JSON.stringify(osVersion || "")) + ', ' + (JSON.stringify(deviceModel || "")) + ', ' + (JSON.stringify(deviceVendor || "")) + ', ' + (JSON.stringify(deviceType || "")) + ', ' + (JSON.stringify(cpuArchitecture || "")) + ')'
-            serverLogger.log('info', 'query: ' + query)
-            db.run(query, function (err, response) {
-                if (err) return res.status(err.code || err.status || 500).send({
-                    err: err,
-                    response: allIpUserAgents.length
+        app.get('/userDetails/userdata/browser', function (req, res) {
+            var allUsersDetailsQuery = redisEnv + '#allUsersDetails#'
+            redisClient.get(allUsersDetailsQuery, function (err, allUsersDetails) {
+                var relevantUsersDetails = JSON.parse(allUsersDetails).map(function (userDetails) {
+                    return userDetails.browserName
                 })
-                res.status(200).send({err: null, response: allIpUserAgents.length + 1})
+                return res.status(200).send(relevantUsersDetails)
             })
-        }
-        else {
-            serverLogger.log('info', 'nothing was inserted')
-            return res.status(200).send({err: 'nothing was inserted', response: allIpUserAgents.length})
-        }
+
+        })
+        app.get('/userDetails/userdata/engine', function (req, res) {
+            var allUsersDetailsQuery = redisEnv + '#allUsersDetails#'
+            redisClient.get(allUsersDetailsQuery, function (err, allUsersDetails) {
+                var relevantUsersDetails = JSON.parse(allUsersDetails).map(function (userDetails) {
+                    return userDetails.engineName
+                })
+                return res.status(200).send(relevantUsersDetails)
+            })
+        })
+        app.get('/userDetails/userdata/os', function (req, res) {
+            var allUsersDetailsQuery = redisEnv + '#allUsersDetails#'
+            redisClient.get(allUsersDetailsQuery, function (err, allUsersDetails) {
+                var relevantUsersDetails = JSON.parse(allUsersDetails).map(function (userDetails) {
+                    return userDetails.osName
+                })
+                return res.status(200).send(relevantUsersDetails)
+            })
+        })
+        app.get('/userDetails/userdata/device', function (req, res) {
+            var allUsersDetailsQuery = redisEnv + '#allUsersDetails#'
+            redisClient.get(allUsersDetailsQuery, function (err, allUsersDetails) {
+                var relevantUsersDetails = JSON.parse(allUsersDetails).map(function (userDetails) {
+                    return [userDetails.deviceModel, userDetails.deviceVendor]
+                })
+                return res.status(200).send(relevantUsersDetails)
+            })
+        })
+        app.get('/userDetails/userdata/cpu', function (req, res) {
+            var allUsersDetailsQuery = redisEnv + '#allUsersDetails#'
+            redisClient.get(allUsersDetailsQuery, function (err, allUsersDetails) {
+                var relevantUsersDetails = JSON.parse(allUsersDetails).map(function (userDetails) {
+                    return userDetails.cpuArchitecture
+                })
+                return res.status(200).send(relevantUsersDetails)
+            })
+        })
+    })
+
+    const sqlite = require('sqlite3').verbose()
+    var db = new sqlite.Database('./mywebsites/userDetails/' + process.env.NODE_ENV + '-user-details.db')
+    db.serialize(function () {
+        var query = 'CREATE TABLE if not exists userdata (ipUserAgent varchar NOT NULL PRIMARY KEY, ip varchar, hostname varchar, country varchar, city varchar, loc varchar, org varchar, region varchar, browserName varchar, browserVersion varchar, engineName varchar, engineVersion varchar, osName varchar, osVersion varchar, deviceModel varchar, deviceVendor varchar, deviceType varchar, cpuArchitecture varchar)'
+        db.run(query)
+    })
+
+
+    app.post('/userDetails/userdata', function (req, res) {
+        const parser = new userAgentParser()
+        const parsedUserAgent = parser.setUA(req.headers['user-agent']).getResult()
+        var browser = parsedUserAgent.browser, browserName = browser.name, browserVersion = browser.version
+        var engine = parsedUserAgent.engine, engineName = engine.name, engineVersion = engine.version
+        var os = parsedUserAgent.os, osName = os.name, osVersion = os.version
+        var device = parsedUserAgent.device, deviceModel = device.model, deviceVendor = device.vendor, deviceType = device.type
+        var cpu = parsedUserAgent.cpu, cpuArchitecture = cpu.architecture
+        var ipUserAgent = req.body.ipAddress + osName + osVersion + engineName + engineVersion + browserName + browserVersion
+
+        var ipUserAgentQuery = redisEnv + '#ipUserAgent#' + ipUserAgent
+        redisClient.exists(ipUserAgentQuery, function (err, reply) {
+            if (reply === 0) {
+                var allUserDetails = {
+                    ip: req.body.ipAddress || "",
+                    hostname: req.body.hostname | "",
+                    country: req.body.country || "",
+                    city: req.body.city || "",
+                    loc: req.body.loc || "",
+                    org: req.body.org || "",
+                    region: req.body.region || "",
+                    browserName: browserName || "",
+                    browserVersion: browserVersion || "",
+                    engineName: engineName || "",
+                    engineVersion: engineVersion || "",
+                    osName: osName || "",
+                    osVersion: osVersion || "",
+                    deviceModel: deviceModel || "",
+                    deviceVendor: deviceVendor || "",
+                    deviceType: deviceType || "",
+                    cpuArchitecture: cpuArchitecture || ""
+                }
+                redisClient.set(ipUserAgentQuery, 'whatever', function () {
+                    var allUsersQuery = redisEnv + '#allUsersDetails#'
+                    redisClient.exists(allUsersQuery, function (err, reply) {
+                        if (reply === 0) {
+                            redisClient.set(allUsersQuery, JSON.stringify([allUserDetails]), function () {
+                                res.status(200).send({err: null, response: 1})
+                            })
+                        }
+                        else if (reply === 1) {
+                            redisClient.get(allUsersQuery, function (err, allUsersDetails) {
+                                var allUsersDetails = JSON.parse(allUsersDetails)
+                                allUsersDetails.push(allUserDetails)
+                                redisClient.set(allUsersQuery, JSON.stringify(allUsersDetails), function () {
+                                    res.status(200).send({err: null, response: allUsersDetails.length})
+                                })
+                            })
+                        }
+                    })
+                })
+            }
+            else {
+                var allUsersQuery = redisEnv + '#allUsersDetails#'
+                redisClient.get(allUsersQuery, function (err, allUsersDetails) {
+                    res.status(200).send({err: null, response: JSON.parse(allUsersDetails).length})
+                })
+            }
+        })
     })
 })
 
-app.get('/error', function(req,res){
+app.get('/error', function (req, res) {
     var html = Handlebars.compile(fs.readFileSync('./error.html', 'utf8'))();
     res.send(html)
 })
