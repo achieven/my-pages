@@ -38,6 +38,11 @@ app.get('/', function (req, res, next) {
             name: 'Leaflet trips (Only link to source code at the moment)',
             link: 'https://github.com/achieven/leaflet',
             tools: 'Angular2, Typescript, Leaflet.js'
+        },
+        {
+            name: 'Hacking (Only link to source code at the moment)',
+            link: 'https://github.com/achieven/hacking',
+            tools: 'Html injection, Nosql injection (on redis)'
         }
     ]
     var mainProjectGithubLink = 'https://github.com/achieven/my-pages'
