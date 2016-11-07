@@ -43,6 +43,11 @@ app.get('/', function (req, res, next) {
             name: 'Hacking (Only link to source code at the moment)',
             link: 'https://github.com/achieven/hacking',
             tools: 'Html injection, Nosql injection (on redis)'
+        },
+        {
+            name: 'Mongo (Only link to source code at the moment)',
+            link: 'https://github.com/achieven/nodeMongoApi',
+            tools: 'MongoDB, authentication cookie'
         }
     ]
     var mainProjectGithubLink = 'https://github.com/achieven/my-pages'
