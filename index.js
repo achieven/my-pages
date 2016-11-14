@@ -41,7 +41,7 @@ app.get('/', function (req, res, next) {
             tools: 'Angular2, Typescript, Leaflet.js'
         },
         {
-            name: 'Hacking (Only link to source code at the moment)',
+            name: 'Hacking',
             link: '/hacking',
             tools: 'XSS, Javascript injection, Sql injection'
         },
