@@ -28,9 +28,9 @@ app.get('/', function (req, res, next) {
         {
             name: 'Messenger',
             link: '/messengerReact',
-            tools: 'react, redis, socket.io, localStorage, salt + sha256 hashing'
+            tools: 'react, redis, socket.io, salt + sha256 hashing, Webpack'
         },
-        {name: 'User Details', link: '/userDetails', tools: 'redis, userAgent, chartist.js, Webpack'},
+        {name: 'User Details', link: '/userDetails', tools: 'redis, userAgent, chartist.js'},
         {name: 'Simple Rest Api', link: '/simplerestapi', tools: 'sqlite'},
         {name: 'Emitter', link: '/emitter', tools: 'react, socket.io, ES6, Browserify'},
         {name: 'Digital Wallet', link: '/backend', tools: 'colu sdk, async.js'},
