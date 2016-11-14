@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"
+          integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"
+            integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa"
+            crossorigin="anonymous"></script>
+    <head>
+    </head>
+<body>
+<div class="container">
+    <li>
+        <form method="get" id="xssForm" action="/htmlinjection">
+            <div class="row">
+                <span>XSS: Write something malicous inside a script tag, such as:</span>
+                <label>
+                    window.localStorage.setItem("a",
+                    "You
+                    have been hacked")</label>
+            </div>
+            <div class="row">
+                <div class="col-xs-4">
+                    <input type="text" class="form-control" name="script"
+                           placeholder="<script> javascript content </script>">
+                </div>
+                <div class="col-xs-2">
+                    <input type="radio" name="defence" id="xssWithDefence" value="true">With Defence</input>
+                </div>
+                <div class="col-xs-2">
+                    <input type="radio" name="defence" id="xssWithoutDefence" value="false">WithoutDefence</input>
+                </div>
+                <button type="submit" class="btn btn-info col-xs-4"> Submit</button>
+            </div>
+
+        </form>
+        <div id="xssResult"></div>
+    </li>
+    <li>
+        <form method="get" id="javascriptInjection" action="/javascriptinjection">
+            <div class="row">
+                <span>Javascript Injection: Write something malicous you think the server
+                    might
+                    use accidentally, such as:</span>
+                <label for="">client.set('a', 'some other value')</label>
+                <span>or write jibberish if you just want to drop the server, whatever</span>
+
+            </div>
+            <div class="row">
+                <div class="col-xs-4">
+                    <input type="text" class="form-control" name="script"
+                           placeholder="javascript content">
+                </div>
+                <div class="col-xs-2">
+                    <input type="radio" name="defence" value="true">With Defence</input>
+                </div>
+                <div class="col-xs-2">
+                    <input type="radio" name="defence"
+                           value="false">WithoutDefence</input>
+                </div>
+                <button type="submit" class="btn btn-info col-xs-4"> Submit</button>
+            </div>
+        </form>
+    </li>
+
+    <li>
+        <form method="get" id="sqlInjection" action="/sqlinjection">
+            <div class="row">
+                <span>Sql Injection: Write some malicous id such as:</span>
+                <label>1" or "1"="1</label>
+            </div>
+            <div class="row">
+                <div class="col-xs-4">
+                    <input type="text" class="form-control" name="id"
+                           placeholder="sql id">
+                </div>
+                <div class="col-xs-2">
+                    <input type="radio" name="defence" value="true">With Defence</input>
+                </div>
+                <div class="col-xs-2">
+                    <input type="radio" name="defence"
+                           value="false">WithoutDefence</input>
+                </div>
+                <button type="submit" class="btn btn-info col-xs-4"> Submit</button>
+            </div>
+        </form>
+    </li>
+
+    </ul>
+</div>
+<script>
+
+
+    $('#xssForm').on('submit', function (e) {
+        e.preventDefault()
+        var script = $('[name="script"]').val()
+        var withDefence = document.getElementById('xssWithDefence').checked
+        var withoutDefence = document.getElementById('xssWithoutDefence').checked
+        var defence = withDefence ? true : false
+
+        $.ajax({
+            type: 'get',
+            url: '/xss',
+            data: {script: script, defence: defence},
+            contentType: 'application/json',
+            success: function (result) {
+                $('#xssResult').html(result)
+            }
+        })
+
+    })
+</script>
+</body>
+</html>
+

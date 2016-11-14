@@ -7,6 +7,7 @@ const bodyParser = require('body-parser')
 const socketio = require('socket.io')
 const http = require('http')
 const server = http.Server(app);
+const sqlite = require('sqlite3').verbose()
 
 const userAgentParser = require('user-agent-parser')
 const util = require('./util/util')
@@ -41,8 +42,8 @@ app.get('/', function (req, res, next) {
         },
         {
             name: 'Hacking (Only link to source code at the moment)',
-            link: 'https://github.com/achieven/hacking',
-            tools: 'Html injection, Nosql injection (on redis)'
+            link: '/hacking',
+            tools: 'XSS, Javascript injection, Sql injection'
         },
         {
             name: 'Mongo (Only link to source code at the moment)',
@@ -337,19 +338,12 @@ function messengerHelper() {
             function keepSocketAlive() {
                 setInterval(function () {
                     socket.emit('heartbeat')
-                }, 3000)
+                }, 2000)
             }
 
             keepSocketAlive()
+            
 
-            function mockSslCertificate() {
-                socket.removeAllListeners('canITrustYou?')
-                socket.on('canITrustYou?', function () {
-                    socket.emit('yesTrustMe')
-                })
-            }
-
-            mockSslCertificate();
             socket.on('signup', function (data) {
                 util.signup(redisClient, data, function (message, param) {
                     socket.username = param
@@ -545,8 +539,7 @@ redisClient.on('connect', function () {
             })
         })
     })
-
-    const sqlite = require('sqlite3').verbose()
+    
     var db = new sqlite.Database('./mywebsites/userDetails/' + process.env.NODE_ENV + '-user-details.db')
     db.serialize(function () {
         var query = 'CREATE TABLE if not exists userdata (ipUserAgent varchar NOT NULL PRIMARY KEY, ip varchar, hostname varchar, country varchar, city varchar, loc varchar, org varchar, region varchar, browserName varchar, browserVersion varchar, engineName varchar, engineVersion varchar, osName varchar, osVersion varchar, deviceModel varchar, deviceVendor varchar, deviceType varchar, cpuArchitecture varchar)'
@@ -616,10 +609,21 @@ redisClient.on('connect', function () {
     })
 })
 
+
+app.get('/hacking', function(req, res){
+    var hackingServer = require('./mywebsites/hacking/index')
+    new hackingServer(app, fs, redisClient, sqlite)
+    var html = Handlebars.compile(fs.readFileSync('./mywebsites/hacking/index.html', 'utf8'))();
+    res.send(html)
+    
+})
+
 app.get('/error', function (req, res) {
     var html = Handlebars.compile(fs.readFileSync('./error.html', 'utf8'))();
     res.send(html)
 })
+
+
 
 
 
