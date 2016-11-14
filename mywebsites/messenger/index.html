@@ -10,7 +10,7 @@
 <div class={{tokenClass}} val={{token}}></div>
 <h2 class="loadingMessage">Please wait while page is being loaded...</h2>
 <div id="root"></div>
-<script src="/static/bundle.js"></script>
+
 <script>
     var env = document.getElementsByClassName('env')[0].getAttribute('val')
     var componentsToShow = document.getElementsByClassName('componentsToShow')[0].getAttribute('val')
@@ -25,5 +25,6 @@
     }
     window.localStorage.setItem('env', env)
 </script>
+<script src="/static/bundle.js"></script>
 </body>
 </html>
