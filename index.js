@@ -30,9 +30,9 @@ app.get('/', function (req, res, next) {
             link: '/messengerReact',
             tools: 'react, redis, socket.io, localStorage, salt + sha256 hashing'
         },
-        {name: 'User Details', link: '/userDetails', tools: 'redis, userAgent, chartist.js'},
+        {name: 'User Details', link: '/userDetails', tools: 'redis, userAgent, chartist.js, Webpack'},
         {name: 'Simple Rest Api', link: '/simplerestapi', tools: 'sqlite'},
-        {name: 'Emitter', link: '/emitter', tools: 'react, socket.io, EcmaScript6'},
+        {name: 'Emitter', link: '/emitter', tools: 'react, socket.io, ES6, Browserify'},
         {name: 'Digital Wallet', link: '/backend', tools: 'colu sdk, async.js'},
         {
             name: 'Leaflet trips (Only link to source code at the moment)',
