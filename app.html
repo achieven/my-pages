@@ -37,40 +37,11 @@
                 </table>
             </div>
         </div>
-        <div class="row">
-            <div class="col-xs-12 text-center">
-                <button id="stopCountdownVideo" class="btn btn-danger">This video is annoying, turn it
-                    off!
-                </button>
-            </div>
-        </div>
-        <h4 class="row col-xs-12"></h4>
-        <div class="row">
-            <div class="col-xs-12 text-center">
-                <div id="countownVideoDiv"></div>
-            </div>
-            <h4 class="row col-xs-12"></h4>
-        </div>
-
     </div>
 </div>
 
-<script src="https://www.youtube.com/iframe_api"></script>
 <script>
-    function repeatCountdownVideo(){
-        var countdownVideoHtml = '<iframe id="countdownVideo" width="728" height="390" src="https://www.youtube.com/embed/OcV8Wxvo4Wo?autoplay=1" frameborder="0" allowfullscreen></iframe>'
-        $('#countownVideoDiv').html(countdownVideoHtml)
-        var countdownInterval = setInterval(function () {
-            $('#countownVideoDiv').empty()
-            $('#countownVideoDiv').html(countdownVideoHtml)
-        }, 17000)
-        $('#stopCountdownVideo').on('click', function (e) {
-            clearInterval(countdownInterval)
-            $('#countownVideoDiv').remove()
-            $('#stopCountdownVideo').remove()
-        })
-    }
-    repeatCountdownVideo()
+
 
 
     function sendIpInfo(){
