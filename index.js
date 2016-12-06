@@ -27,6 +27,11 @@ app.use(bodyParser.urlencoded({extended: true}));
 app.get('/', function (req, res, next) {
     var projects = [
         {
+            name: 'Attacks Dashboard',
+            link: 'https://test.achievendar.tk',
+            tools: 'scss, gulp, angular 2'
+        },
+        {
             name: 'Messenger',
             link: '/messengerReact',
             tools: 'react, redis, socket.io, salt + sha256 hashing, Webpack'
